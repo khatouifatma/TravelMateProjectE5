@@ -1,18 +1,27 @@
 import { auth, LoginCredentials, RegisterData, User } from "@/services/auth";
-import { useCallback, useEffect, useState } from "react"
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 
-export const useAuth = () => {
+interface AuthContextType {
+    user: User | null;
+    isLoading: boolean;
+    isAuthenticated: boolean;
+    error: string | null;
+    login: (credentials: LoginCredentials) => Promise<{ user: User, tokens: any }>;
+    register: (data: RegisterData) => Promise<{ user: User, tokens: any }>;
+    logout: () => Promise<void>;
+    refreshAuth: () => Promise<void>;
+}
 
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        checkAuth();
-    }, []);
 
-    const checkAuth = async () => {
+    const checkAuth = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
@@ -26,14 +35,18 @@ export const useAuth = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        checkAuth();
+    }, []);
 
     const login = useCallback(async (credentials: LoginCredentials) => {
         try {
             setIsLoading(true);
             setError(null);
             const { user, tokens } = await auth.login(credentials);
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise(resolve => setTimeout(resolve, 100));
             const state = await auth.getAuthState();
 
             setUser(state.user);
@@ -52,13 +65,14 @@ export const useAuth = () => {
         }
 
     }, []);
+
     const register = useCallback(async (data: RegisterData) => {
         try {
             setIsLoading(true);
             setError(null);
             const { user, tokens } = await auth.register(data);
             // Attendre un peu pour que SecureStore sauvegarde
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise(resolve => setTimeout(resolve, 100));
             // Vérifier l'état après sauvegarde
             const state = await auth.getAuthState();
             setUser(state.user);
@@ -95,15 +109,28 @@ export const useAuth = () => {
         await checkAuth();
     }, []);
 
-    return {
-        user,
-        isLoading,
-        isAuthenticated,
-        error,
-        login,
-        register,
-        logout,
-        refreshAuth,
-    };
+    return (
+        <AuthContext.Provider
+            value={{
+                user,
+                isLoading,
+                isAuthenticated,
+                error,
+                login,
+                register,
+                logout,
+                refreshAuth
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
+}
 
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 }

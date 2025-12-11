@@ -107,7 +107,7 @@ export const auth = {
         ]);
 
         console.log('[AUTH] Getting tokens :', {
-            accessToken : accessToken,
+            accessToken: accessToken,
             hasAccessToken: !!accessToken,
             hasRefreshtoken: !!refreshToken,
             expiresAt: expiresAt ? new Date(parseInt(expiresAt, 10)).toISOString() : 'none'
@@ -274,6 +274,9 @@ export const auth = {
         } catch (error) {
             console.warn('Logout API Failed');
         }
+
+        await Promise.all([this.clearTokens, this.clearUser()]);
+
     },
     async refreshTokens(): Promise<AuthTokens | null> {
         if (refreshPromise) return refreshPromise;

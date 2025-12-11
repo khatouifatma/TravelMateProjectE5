@@ -8,7 +8,7 @@ import { useOffline } from '@/hooks/use-offline';
 import { useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, AuthProvider } from '@/contexts/auth-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -118,6 +118,9 @@ const styles = StyleSheet.create({
 
 export default function RootLayout() {
   return (
-    <RootLayoutContent />
+    <AuthProvider>
+        <RootLayoutContent />
+    </AuthProvider>
   );
+  
 }

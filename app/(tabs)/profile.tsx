@@ -1,19 +1,23 @@
 
+import { useAuth } from '@/contexts/auth-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { View, StyleSheet, ScrollView, Text } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Alert } from 'react-native';
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
     const router = useRouter();
+    const { logout } = useAuth();
     const stats = [
         { label: 'Voyages', value: '12', icon: 'map-outline', colors: ['#a855f7', '#ec4899'] as const },
         { label: 'Photos', value: '250', icon: 'camera', colors: ['#3b82f6', '#06b6d4'] as const },
         { label: 'Favoris', value: '12', icon: 'heart-outline', colors: ['#ef4444', '#f43f5e'] as const }
 
-    ]
+    ];
+
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -58,10 +62,42 @@ export default function ProfileScreen() {
                 </LinearGradient>
 
 
-                    {/*Content*/}
-                    <View style={styles.content}>
-                            <Text>CONTENT</Text>
-                    </View>
+                {/*Content*/}
+                <View style={styles.content}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={async () => {
+                            Alert.alert(
+                                'Déconnexion',
+                                'Etes-vous sûr de vouloir vous déconecter ?',
+                                [
+                                    { text: 'Annuler', style: 'cancel' },
+                                    {
+                                        text: 'Déconnexion',
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                            await logout();
+                                            router.replace('/login');
+                                        }
+                                    }
+                                ]
+                            )
+                        }}
+                    >
+                        <LinearGradient
+                            colors={['#ef4444', '#f43f5e']}
+                            style={styles.menuItemIcon}
+                        >
+                            <Ionicons name='log-out-outline' size={24} color='white' />
+                        </LinearGradient>
+                        <View>
+                            <Text style={styles.menuItemTitle}>Déconnexion</Text>
+                            <Text style={styles.menuItemSubTitle}>Se déconnecter de votre compte</Text>
+
+                        </View>
+                    </TouchableOpacity>
+                    
+                </View>
             </ScrollView>
         </SafeAreaView>
 
@@ -156,5 +192,37 @@ const styles = StyleSheet.create({
         padding: 24,
         marginTop: -80,
     },
+    menuItem: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2
+    },
+    menuItemIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16
+    },
+    menuItemTitle: {
+        fontSize: 16,
+        fontWeight:'600',
+        color: '#111827',
+        marginBottom: 4
+    },
+    menuItemSubTitle: {
+        fontSize: 16,
+        color: '#6b7280'
+    }
+
 
 });
