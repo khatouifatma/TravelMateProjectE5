@@ -8,6 +8,7 @@ import { IMAGES_SOURCES } from '.';
 export default function TabTwoScreen() {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<string>('All');
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const TRIPS_DATA = [
     {
@@ -39,7 +40,27 @@ export default function TabTwoScreen() {
     }
   ];
 
-  const tabs = ['All', 'Upcoming', 'Past'];
+  const tabs = ['All', 'Upcoming', 'Past', 'Favorites'];
+
+  const toggleFavorite = (tripId: string) => {
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(tripId)) {
+        newFavorites.delete(tripId);
+      } else {
+        newFavorites.add(tripId);
+      }
+      return newFavorites;
+    });
+  };
+
+  const filteredTrips = TRIPS_DATA.filter(trip => {
+    if (selectedTab === 'Favorites') {
+      return favorites.has(trip.id);
+    }
+    // Vous pouvez ajouter d'autres filtres pour 'Upcoming' et 'Past' ici
+    return true;
+  });
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -87,51 +108,77 @@ export default function TabTwoScreen() {
 
         {/* Trips List */}
         <View style={styles.tripsList}>
-          {TRIPS_DATA.map((trip) => (
-            <TouchableOpacity
-              key={trip.id}
-              style={styles.tripCard}
-              onPress={() => router.push({
-                pathname: '/modal/tripDetails',
-                params: { id: trip.id }
-              })}>
-              {/* Image */}
-              <View style={styles.tripImageContainer}> 
-                <Image 
-                  source={IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || trip.image}
-                  style={styles.tripImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.tripImageOverlay} /> 
-                <View style={styles.tripImageContent}>
-                  <Text style={styles.tripCardTitle}>{trip.title}</Text>
-                  <View style={styles.tripLocation}>
-                    <Ionicons name="location-outline" size={16} color="white" />
-                    <Text style={styles.tripLocationText}>{trip.destination}</Text>
-                  </View>
-                </View>
-              </View>
+          {filteredTrips.length === 0 && selectedTab === 'Favorites' ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="heart-outline" size={64} color="#d1d5db" />
+              <Text style={styles.emptyStateText}>Aucun voyage favori</Text>
+              <Text style={styles.emptyStateSubtext}>
+                Marquez vos voyages préférés en appuyant sur l icône cœur
+              </Text>
+            </View>
+          ) : (
+            filteredTrips.map((trip) => (
+              <TouchableOpacity
+                key={trip.id}
+                style={styles.tripCard}
+                onPress={() => router.push({
+                  pathname: '/modal/tripDetails',
+                  params: { id: trip.id }
+                })}>
+                {/* Image */}
+                <View style={styles.tripImageContainer}> 
+                  <Image 
+                    source={IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || trip.image}
+                    style={styles.tripImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.tripImageOverlay} /> 
+                  
+                  {/* Favorite Button */}
+                  <TouchableOpacity 
+                    style={styles.favoriteButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(trip.id);
+                    }}
+                  >
+                    <Ionicons 
+                      name={favorites.has(trip.id) ? "heart" : "heart-outline"} 
+                      size={24} 
+                      color={favorites.has(trip.id) ? "#ec4899" : "white"} 
+                    />
+                  </TouchableOpacity>
 
-              {/* Trip info */}
-              <View style={styles.tripCardInfo}>
-                <View style={styles.tripDate}>
-                  <Ionicons name="calendar-outline" size={16} color="#6b7280" />
-                  <Text style={styles.tripDateText}>
-                    {new Date(trip.startDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} -
-                    {' '}
-                    {new Date(trip.endDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}
-                  </Text>
-                </View>
-                <View style={styles.tripPhotos}>
-                  <View style={styles.photoCircle}/>
-                  <View style={[styles.photoCircle, styles.photoCircle2]}/>
-                  <View style={[styles.photoCircle, styles.photoCircle3]}>
-                    <Text style={styles.tripPhotoCount}>{trip.photosCount}</Text>
+                  <View style={styles.tripImageContent}>
+                    <Text style={styles.tripCardTitle}>{trip.title}</Text>
+                    <View style={styles.tripLocation}>
+                      <Ionicons name="location-outline" size={16} color="white" />
+                      <Text style={styles.tripLocationText}>{trip.destination}</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+
+                {/* Trip info */}
+                <View style={styles.tripCardInfo}>
+                  <View style={styles.tripDate}>
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                    <Text style={styles.tripDateText}>
+                      {new Date(trip.startDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} -
+                      {' '}
+                      {new Date(trip.endDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}
+                    </Text>
+                  </View>
+                  <View style={styles.tripPhotos}>
+                    <View style={styles.photoCircle}/>
+                    <View style={[styles.photoCircle, styles.photoCircle2]}/>
+                    <View style={[styles.photoCircle, styles.photoCircle3]}>
+                      <Text style={styles.tripPhotoCount}>{trip.photosCount}</Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
         <View style={{height: 20}}/>
       </ScrollView>
@@ -241,6 +288,18 @@ const styles = StyleSheet.create({
     bottom : 0,
     backgroundColor : 'rgba(0,0,0,0.3)',
   },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
   tripImageContent : {
     position : 'absolute',
     bottom : 16,
@@ -302,5 +361,23 @@ const styles = StyleSheet.create({
     fontSize : 10,
     color : 'white',
     fontWeight : '600',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginTop: 16,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 });

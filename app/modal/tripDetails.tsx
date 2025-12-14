@@ -51,6 +51,7 @@ export default function TripDetailScreen() {
   const router = useRouter();
   
   const [trip, setTrip] = useState<Trip | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'photos' | 'activities' | 'notes'>('photos');
   const [showAddActivity, setShowAddActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
@@ -203,6 +204,11 @@ export default function TripDetailScreen() {
     
     const selectedTrip = mockTrips[id as string] || mockTrips['3'];
     setTrip(selectedTrip);
+  };
+
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    // Ici vous pouvez ajouter la logique pour sauvegarder dans AsyncStorage ou votre backend
   };
 
   const handleAddActivity = () => {
@@ -391,10 +397,14 @@ export default function TripDetailScreen() {
           
           <SafeAreaView edges={['top']} style={styles.headerButtons}>
             <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
+              style={styles.favoriteButtonHeader}
+              onPress={toggleFavorite}
             >
-              <Ionicons name="arrow-back" size={24} color="white" />
+              <Ionicons 
+                name={isFavorite ? "heart" : "heart-outline"} 
+                size={24} 
+                color={isFavorite ? "#ec4899" : "white"} 
+              />
             </TouchableOpacity>
           </SafeAreaView>
 
@@ -701,8 +711,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
-  backButton: {
+  favoriteButtonHeader: {
     width: 40,
     height: 40,
     borderRadius: 20,
