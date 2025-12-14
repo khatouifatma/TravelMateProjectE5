@@ -1,12 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+    Alert,
     Image,
+    Modal,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -47,6 +52,15 @@ export default function TripDetailScreen() {
   
   const [trip, setTrip] = useState<Trip | null>(null);
   const [selectedTab, setSelectedTab] = useState<'photos' | 'activities' | 'notes'>('photos');
+  const [showAddActivity, setShowAddActivity] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  
+  const [activityTitle, setActivityTitle] = useState('');
+  const [activityDescription, setActivityDescription] = useState('');
+  const [activityLocation, setActivityLocation] = useState('');
+  const [activityDate, setActivityDate] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [activityType, setActivityType] = useState<Activity['type']>('visit');
 
   useEffect(() => {
     loadTripDetails();
@@ -191,6 +205,149 @@ export default function TripDetailScreen() {
     setTrip(selectedTrip);
   };
 
+  const handleAddActivity = () => {
+    if (!activityTitle) {
+      Alert.alert('Erreur', 'Veuillez entrer un titre');
+      return;
+    }
+
+    if (trip) {
+      const activityDateOnly = new Date(activityDate.toDateString());
+      const tripStartDate = new Date(new Date(trip.startDate).toDateString());
+      const tripEndDate = new Date(new Date(trip.endDate).toDateString());
+
+      if (activityDateOnly < tripStartDate) {
+        Alert.alert('Date invalide', 'La date de l\'activité ne peut pas être avant le début du voyage');
+        return;
+      }
+
+      if (activityDateOnly > tripEndDate) {
+        Alert.alert('Date invalide', 'La date de l\'activité ne peut pas être après la fin du voyage');
+        return;
+      }
+    }
+
+    const newActivity: Activity = {
+      id: Date.now().toString(),
+      title: activityTitle,
+      description: activityDescription,
+      date: activityDate.toISOString().split('T')[0],
+      location: activityLocation,
+      type: activityType,
+    };
+
+    setTrip((prev) => ({
+      ...prev!,
+      activities: [...(prev?.activities || []), newActivity].sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      ),
+    }));
+
+    resetActivityForm();
+    setShowAddActivity(false);
+  };
+
+  const handleUpdateActivity = () => {
+    if (!editingActivity) return;
+    
+    if (!activityTitle) {
+      Alert.alert('Erreur', 'Veuillez entrer un titre');
+      return;
+    }
+
+    if (trip) {
+      const activityDateOnly = new Date(activityDate.toDateString());
+      const tripStartDate = new Date(new Date(trip.startDate).toDateString());
+      const tripEndDate = new Date(new Date(trip.endDate).toDateString());
+
+      if (activityDateOnly < tripStartDate) {
+        Alert.alert('Date invalide', 'La date de l\'activité ne peut pas être avant le début du voyage');
+        return;
+      }
+
+      if (activityDateOnly > tripEndDate) {
+        Alert.alert('Date invalide', 'La date de l\'activité ne peut pas être après la fin du voyage');
+        return;
+      }
+    }
+
+    setTrip((prev) => ({
+      ...prev!,
+      activities: prev!.activities!.map((a) =>
+        a.id === editingActivity.id
+          ? {
+              ...a,
+              title: activityTitle,
+              description: activityDescription,
+              location: activityLocation,
+              date: activityDate.toISOString().split('T')[0],
+              type: activityType,
+            }
+          : a
+      ).sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      ),
+    }));
+
+    resetActivityForm();
+    setEditingActivity(null);
+    setShowAddActivity(false);
+  };
+
+  const handleDeleteActivity = (activityId: string) => {
+    Alert.alert(
+      'Supprimer',
+      'Êtes-vous sûr de vouloir supprimer cette activité ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            setTrip((prev) => ({
+              ...prev!,
+              activities: prev!.activities!.filter((a) => a.id !== activityId),
+            }));
+          },
+        },
+      ]
+    );
+  };
+
+  const resetActivityForm = () => {
+    setActivityTitle('');
+    setActivityDescription('');
+    setActivityLocation('');
+    setActivityDate(trip ? new Date(trip.startDate) : new Date());
+    setActivityType('visit');
+  };
+
+  const openEditActivity = (activity: Activity) => {
+    setActivityTitle(activity.title);
+    setActivityDescription(activity.description);
+    setActivityLocation(activity.location || '');
+    const activityDateObj = new Date(activity.date + 'T12:00:00');
+    setActivityDate(activityDateObj);
+    setActivityType(activity.type);
+    setEditingActivity(activity);
+    setShowAddActivity(true);
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    const currentDate = selectedDate || activityDate;
+    
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      if (event.type === 'set' && selectedDate) {
+        setActivityDate(selectedDate);
+      }
+    } else {
+      if (selectedDate) {
+        setActivityDate(selectedDate);
+      }
+    }
+  };
+
   const getActivityIcon = (type: Activity['type']) => {
     switch (type) {
       case 'visit': return 'location';
@@ -199,6 +356,14 @@ export default function TripDetailScreen() {
       case 'transport': return 'car';
       case 'accommodation': return 'bed';
     }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   };
 
   if (!trip) {
@@ -295,6 +460,24 @@ export default function TripDetailScreen() {
 
           {selectedTab === 'activities' && (
             <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => {
+                  if (trip) {
+                    setActivityDate(new Date(trip.startDate + 'T12:00:00'));
+                  }
+                  setShowAddActivity(true);
+                }}
+              >
+                <LinearGradient
+                  colors={['#a855f7', '#ec4899']}
+                  style={styles.addButtonGradient}
+                >
+                  <Ionicons name="add" size={20} color="white" />
+                  <Text style={styles.addButtonText}>Ajouter une activité</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
               {trip.activities?.map((activity) => (
                 <View key={activity.id} style={styles.activityCard}>
                   <View style={styles.activityHeader}>
@@ -317,6 +500,14 @@ export default function TripDetailScreen() {
                       <Text style={styles.activityDate}>
                         {new Date(activity.date).toLocaleDateString('fr-FR')}
                       </Text>
+                    </View>
+                    <View style={styles.activityActions}>
+                      <TouchableOpacity onPress={() => openEditActivity(activity)}>
+                        <Ionicons name="create-outline" size={20} color="#6b7280" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDeleteActivity(activity.id)}>
+                        <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                      </TouchableOpacity>
                     </View>
                   </View>
                 </View>
@@ -342,6 +533,135 @@ export default function TripDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showAddActivity}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingActivity ? 'Modifier' : 'Nouvelle'} Activité
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowAddActivity(false);
+                  setEditingActivity(null);
+                  resetActivityForm();
+                }}
+              >
+                <Ionicons name="close" size={24} color="#111827" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.label}>Titre *</Text>
+              <TextInput
+                style={styles.input}
+                value={activityTitle}
+                onChangeText={setActivityTitle}
+                placeholder="Ex: Visite de la Tour Eiffel"
+                placeholderTextColor="#9ca3af"
+              />
+
+              <Text style={styles.label}>Type</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.typeSelector}>
+                {(['visit', 'food', 'activity', 'transport', 'accommodation'] as const).map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[styles.typeButton, activityType === type && styles.typeButtonActive]}
+                    onPress={() => setActivityType(type)}
+                  >
+                    <Ionicons
+                      name={getActivityIcon(type)}
+                      size={20}
+                      color={activityType === type ? 'white' : '#6b7280'}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <Text style={styles.label}>Lieu</Text>
+              <TextInput
+                style={styles.input}
+                value={activityLocation}
+                onChangeText={setActivityLocation}
+                placeholder="Ex: Champ de Mars"
+                placeholderTextColor="#9ca3af"
+              />
+
+              <Text style={styles.label}>Date *</Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => {
+                  if (Platform.OS === 'android') {
+                    setShowDatePicker(true);
+                  } else {
+                    setShowDatePicker(!showDatePicker);
+                  }
+                }}
+              >
+                <Ionicons name="calendar-outline" size={20} color="#a855f7" />
+                <Text style={styles.datePickerText}>{formatDate(activityDate)}</Text>
+                <Ionicons name="chevron-down" size={20} color="#6b7280" />
+              </TouchableOpacity>
+
+              {showDatePicker && Platform.OS === 'android' && (
+                <DateTimePicker
+                  value={activityDate}
+                  mode="date"
+                  display="default"
+                  onChange={onDateChange}
+                />
+              )}
+
+              {showDatePicker && Platform.OS === 'ios' && (
+                <>
+                  <DateTimePicker
+                    value={activityDate}
+                    mode="date"
+                    display="spinner"
+                    onChange={onDateChange}
+                  />
+                  <TouchableOpacity
+                    style={styles.datePickerDoneButton}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Text style={styles.datePickerDoneText}>Confirmer</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              <Text style={styles.label}>Description</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={activityDescription}
+                onChangeText={setActivityDescription}
+                placeholder="Décrivez l'activité..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={4}
+              />
+
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={editingActivity ? handleUpdateActivity : handleAddActivity}
+              >
+                <LinearGradient
+                  colors={['#a855f7', '#ec4899']}
+                  style={styles.submitButtonGradient}
+                >
+                  <Text style={styles.submitButtonText}>
+                    {editingActivity ? 'Modifier' : 'Ajouter'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -476,6 +796,23 @@ const styles = StyleSheet.create({
   section: {
     gap: 12,
   },
+  addButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  addButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  addButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   activityCard: {
     backgroundColor: 'white',
     borderRadius: 16,
@@ -526,6 +863,11 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     fontSize: 12,
   },
+  activityActions: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
   noteCard: {
     backgroundColor: 'white',
     borderRadius: 16,
@@ -546,5 +888,107 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontSize: 14,
     lineHeight: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    color: '#111827',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  typeSelector: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  typeButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  typeButtonActive: {
+    backgroundColor: '#a855f7',
+  },
+  datePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    gap: 8,
+  },
+  datePickerText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#111827',
+  },
+  datePickerDoneButton: {
+    backgroundColor: '#a855f7',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  datePickerDoneText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  submitButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 24,
+    marginBottom: 20,
+  },
+  submitButtonGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
