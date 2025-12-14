@@ -1,26 +1,19 @@
-
-
-import React from 'react';
-
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, ScrollView, View, Text, TouchableOpacity } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
- export  const IMAGES_SOURCES = {
-    paris: require('@/assets/images/paris.jpeg'),
-    tokyo: require('@/assets/images/tokyo.jpeg'),
-    bali : require('@/assets/images/bali.jpeg'),
-  }
+export const IMAGES_SOURCES = {
+  paris: require('@/assets/images/paris.jpeg'),
+  tokyo: require('@/assets/images/tokyo.jpeg'),
+  bali: require('@/assets/images/bali.jpeg'),
+}
 
 export default function HomeScreen() {
+  const router = useRouter();
 
   const stats = [
     { label: 'Trips', value: 12, icon: 'airplane-outline' },
@@ -30,7 +23,7 @@ export default function HomeScreen() {
 
   const upcomingTrips = [
     {
-      id: '1',
+      id: '3',
       title: 'Trip to Paris',
       date: '10-20 Dec',
       daysLeft: 8,
@@ -53,6 +46,17 @@ export default function HomeScreen() {
     { icon: 'airplane-outline', text: 'Booked a flight to New York', time: '3 days ago' },
   ] as const;
 
+  const handleTripPress = (tripId: string) => {
+    router.push({
+      pathname: '/modal/tripDetails',
+      params: { id: tripId }
+    });
+  };
+
+  const handleSeeAllTrips = () => {
+    router.push('/(tabs)/trips');
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView>
@@ -60,7 +64,7 @@ export default function HomeScreen() {
         <LinearGradient colors={['#a855f7', '#ec4899']} style={styles.header}>
           <View style={styles.headerTop}>
             <View>
-              <Text style={styles.greentingText}>Hello</Text>
+              <Text style={styles.greetingText}>Hello</Text>
               <Text style={styles.firstnameText}>Odilon!</Text>
             </View>
             <TouchableOpacity style={styles.notificationBtn}>
@@ -88,36 +92,37 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Upcoming Trips</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={handleSeeAllTrips}>
                 <Text style={styles.homeSeeAllBtn}>See All</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-
-        {
-          upcomingTrips.map((trip) => (
-            <TouchableOpacity
-              key={trip.id}
-              style={styles.tripCard}>
-              <Image
-                source={IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || trip.image}
-                style={styles.tripImage}
-              />
-              <View style={styles.tripInfo}>
-                <Text style={styles.tripTitle}>{trip.title}</Text>
-                <View style={styles.tripDate}>
-                  <Ionicons name="calendar-outline" size={16} color="#6b7280" />
-                  <Text style={styles.tripDateText}>{trip.date}</Text>
-                </View>
-                <View style={styles.tripBadge}>
-                  <Text style={styles.tripBadgeText}>Dans {trip.daysLeft} jours </Text>
-                </View>
+        {upcomingTrips.map((trip) => (
+          <TouchableOpacity
+            key={trip.id}
+            style={styles.tripCard}
+            onPress={() => handleTripPress(trip.id)}
+            activeOpacity={0.7}
+          >
+            <Image
+              source={IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || trip.image}
+              style={styles.tripImage}
+            />
+            <View style={styles.tripInfo}>
+              <Text style={styles.tripTitle}>{trip.title}</Text>
+              <View style={styles.tripDate}>
+                <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                <Text style={styles.tripDateText}>{trip.date}</Text>
               </View>
-            </TouchableOpacity>))
-        }
-
+              <View style={styles.tripBadge}>
+                <Text style={styles.tripBadgeText}>Dans {trip.daysLeft} jours</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9ca3af" style={styles.tripChevron} />
+          </TouchableOpacity>
+        ))}
 
         {/* Quick Actions */}
         <View style={styles.section}>
@@ -137,7 +142,7 @@ export default function HomeScreen() {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleSeeAllTrips}>
               <LinearGradient colors={['#10b981', '#059669']} style={styles.quickActionCard}>
                 <Ionicons name="map-outline" size={24} color="#fff" />
                 <Text style={styles.quickActionLabel}>Explore</Text>
@@ -155,15 +160,18 @@ export default function HomeScreen() {
             {activities.map((activity, idx) => (
               <View style={styles.activityCard} key={idx}>
                 <Text style={styles.activityIcon}>
-                  <Ionicons name={activity.icon} size={24} color="#6b7280" /></Text>
-                <View>
+                  <Ionicons name={activity.icon} size={24} color="#6b7280" />
+                </Text>
+                <View style={styles.activityInfo}>
                   <Text style={styles.activityText}>{activity.text}</Text>
                   <Text style={styles.activityTime}>{activity.time}</Text>
                 </View>
-              </View>))}
+              </View>
+            ))}
           </View>
         </View>
 
+        <View style={{ height: 20 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -187,7 +195,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24
   },
-  greentingText: {
+  greetingText: {
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 24,
   },
@@ -258,6 +266,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
     marginHorizontal: 12,
     shadowColor: '#000',
@@ -304,6 +313,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  tripChevron: {
+    marginLeft: 8,
+  },
   quickActionsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -340,6 +352,9 @@ const styles = StyleSheet.create({
   activityIcon: {
     fontSize: 24,
     marginRight: 12,
+  },
+  activityInfo: {
+    flex: 1,
   },
   activityText: {
     fontSize: 14,

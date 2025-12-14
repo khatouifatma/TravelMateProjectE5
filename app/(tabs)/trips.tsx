@@ -1,21 +1,11 @@
-import { Platform, StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
-
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { HeaderTitle } from '@react-navigation/elements';
-import { useState } from 'react';
-import { IMAGES_SOURCES } from '.';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { IMAGES_SOURCES } from '.';
 
 export default function TabTwoScreen() {
-
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<string>('All');
 
@@ -23,34 +13,33 @@ export default function TabTwoScreen() {
     {
       id: '1',
       title: 'Trip to Bali',
-      destination : 'Bali, Indonesia',
-      startDate : '2024-08-10',
-      endDate : '2024-08-20',
-      image : 'bali',
+      destination: 'Bali, Indonesia',
+      startDate: '2024-08-10',
+      endDate: '2024-08-20',
+      image: 'bali',
       photosCount: 3
     },
     {
       id: '2',
       title: 'Trip to Tokyo',
-      destination : 'Tokyo, Japan',
-      startDate : '2024-09-15',
-      endDate : '2024-09-25',
-      image : 'tokyo',
+      destination: 'Tokyo, Japan',
+      startDate: '2024-09-15',
+      endDate: '2024-09-25',
+      image: 'tokyo',
       photosCount: 5
     }, 
-      {
+    {
       id: '3',
       title: 'Trip to Paris',
-      destination : 'Paris, France',
-      startDate : '2024-10-05',
-      endDate : '2024-10-15',
-      image : 'paris',
+      destination: 'Paris, France',
+      startDate: '2024-10-05',
+      endDate: '2024-10-15',
+      image: 'paris',
       photosCount: 8
-      }
+    }
   ];
 
-  const tabs = ['All', 'Upcoming', 'Past', 'Favorites'];
-
+  const tabs = ['All', 'Upcoming', 'Past'];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -70,20 +59,19 @@ export default function TabTwoScreen() {
         </View>
       </View>
 
-
-      <ScrollView style= {styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style = {styles.tabContainer}
-          contentContainerStyle={ styles.tabsContent}>
+          style={styles.tabContainer}
+          contentContainerStyle={styles.tabsContent}>
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[
                 styles.tab,
-                selectedTab === tab && styles.tabAcitve,
+                selectedTab === tab && styles.tabActive,
               ]}
               onPress={() => setSelectedTab(tab)}>
               <Text
@@ -102,32 +90,37 @@ export default function TabTwoScreen() {
           {TRIPS_DATA.map((trip) => (
             <TouchableOpacity
               key={trip.id}
-              style={styles.tripCard}>
-            {/* Image */}
-            <View style={styles.tripImageContainer}> 
-              <Image source={IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || trip.image}
-               style={styles.tripImage}
-               resizeMode="cover"
-               />
-              <View style={styles.tripImageOverlay} /> 
-              <View style={styles.tripImageContent}>
-                <Text style={styles.tripCardTitle}>{trip.title}</Text>
-                <View style={styles.tripLocation}>
-                  <Ionicons name="location-outline" size={16} color="white" />
-                  <Text style={styles.tripLocationText}>{trip.destination}</Text>
+              style={styles.tripCard}
+              onPress={() => router.push({
+                pathname: '/modal/tripDetails',
+                params: { id: trip.id }
+              })}>
+              {/* Image */}
+              <View style={styles.tripImageContainer}> 
+                <Image 
+                  source={IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || trip.image}
+                  style={styles.tripImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.tripImageOverlay} /> 
+                <View style={styles.tripImageContent}>
+                  <Text style={styles.tripCardTitle}>{trip.title}</Text>
+                  <View style={styles.tripLocation}>
+                    <Ionicons name="location-outline" size={16} color="white" />
+                    <Text style={styles.tripLocationText}>{trip.destination}</Text>
+                  </View>
                 </View>
-              </View>
               </View>
 
               {/* Trip info */}
-
               <View style={styles.tripCardInfo}>
                 <View style={styles.tripDate}>
                   <Ionicons name="calendar-outline" size={16} color="#6b7280" />
                   <Text style={styles.tripDateText}>
                     {new Date(trip.startDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} -
+                    {' '}
                     {new Date(trip.endDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}
-                    </Text>
+                  </Text>
                 </View>
                 <View style={styles.tripPhotos}>
                   <View style={styles.photoCircle}/>
@@ -136,24 +129,13 @@ export default function TabTwoScreen() {
                     <Text style={styles.tripPhotoCount}>{trip.photosCount}</Text>
                   </View>
                 </View>
-
-                </View>
-          </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           ))}
-          
         </View>
-        <View style= {{height: 20}}/>
-      </ScrollView >
-
-      <TouchableOpacity style= {styles.fabButton}
-        onPress ={() => router.push('/modal/add-trip')}>
-        <Ionicons
-          name="add"
-            size={28}
-          color="white"
-        />
-      </TouchableOpacity>
-    </SafeAreaView >
+        <View style={{height: 20}}/>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -216,7 +198,7 @@ const styles = StyleSheet.create({
     borderRadius : 20,
     backgroundColor : 'white',
   },
-  tabAcitve : {
+  tabActive : {
     backgroundColor : '#a855f7',
   },
   tabText : {
@@ -320,21 +302,5 @@ const styles = StyleSheet.create({
     fontSize : 10,
     color : 'white',
     fontWeight : '600',
-  },
-  fabButton : {
-    position : 'absolute',
-    bottom : 80,
-    right : 24,
-    width : 56,
-    height : 56,
-    backgroundColor : '#a855f7',
-    borderRadius : 28,
-    justifyContent : 'center',
-    alignItems : 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
 });
