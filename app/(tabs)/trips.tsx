@@ -1,13 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IMAGES_SOURCES } from '.';
 
 export default function TabTwoScreen() {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'date-desc' | 'date-asc'>('date-desc');
+  const [isSortModalVisible, setSortModalVisible] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const TRIPS_DATA = [
@@ -54,12 +57,50 @@ export default function TabTwoScreen() {
     });
   };
 
-  const filteredTrips = TRIPS_DATA.filter(trip => {
-    if (selectedTab === 'Favorites') {
-      return favorites.has(trip.id);
-    }
-    return true;
-  });
+  const filteredTrips = useMemo(() => {
+    const now = new Date();
+    const filtered = TRIPS_DATA.filter(trip => {
+      // Filtre par onglet
+      let tabMatch = false;
+      switch (selectedTab) {
+        case 'Upcoming':
+          tabMatch = new Date(trip.endDate) >= now;
+          break;
+        case 'Past':
+          tabMatch = new Date(trip.endDate) < now;
+          break;
+        case 'Favorites':
+          tabMatch = favorites.has(trip.id);
+          break;
+        case 'All':
+        default:
+          tabMatch = true;
+          break;
+      }
+
+      if (!tabMatch) return false;
+
+      // Filtre par recherche
+      if (searchQuery) {
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        return trip.destination.toLowerCase().includes(lowerCaseQuery);
+      }
+
+      return true;
+    });
+
+    // Tri
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.startDate).getTime();
+      const dateB = new Date(b.startDate).getTime();
+      if (sortOrder === 'date-asc') {
+        return dateA - dateB;
+      } else {
+        return dateB - dateA;
+      }
+    });
+
+  }, [selectedTab, searchQuery, favorites, sortOrder]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -71,9 +112,13 @@ export default function TabTwoScreen() {
         <View style={styles.searchBarContainer}>
           <View style={styles.searchBar}>
             <Ionicons name="search" size={20} color="#9ca3af" />
-            <TextInput style={styles.searchInput} placeholder="Search trips" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Rechercher un voyage..."
+              value={searchQuery}
+              onChangeText={setSearchQuery} />
           </View>
-          <TouchableOpacity style={styles.filterButton}>
+          <TouchableOpacity style={styles.filterButton} onPress={() => setSortModalVisible(true)}>
             <Ionicons name="options-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
@@ -180,6 +225,42 @@ export default function TabTwoScreen() {
           )}
         </View>
         <View style={{height: 20}}/>
+
+        {/* Modal de tri */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={isSortModalVisible}
+          onRequestClose={() => setSortModalVisible(false)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setSortModalVisible(false)}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Sort by</Text>
+              <TouchableOpacity 
+                style={styles.modalOption} 
+                onPress={() => { setSortOrder('date-desc'); setSortModalVisible(false); }}
+              >
+                <Ionicons 
+                  name={sortOrder === 'date-desc' ? 'radio-button-on' : 'radio-button-off'} 
+                  size={20} 
+                  color="#a855f7" 
+                />
+                <Text style={styles.modalOptionText}>Date (most recent)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalOption} 
+                onPress={() => { setSortOrder('date-asc'); setSortModalVisible(false); }}
+              >
+                <Ionicons 
+                  name={sortOrder === 'date-asc' ? 'radio-button-on' : 'radio-button-off'} 
+                  size={20} 
+                  color="#a855f7" 
+                />
+                <Text style={styles.modalOptionText}>Date (oldest)</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
@@ -378,5 +459,41 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    width: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#374151',
+    marginLeft: 12,
   },
 });

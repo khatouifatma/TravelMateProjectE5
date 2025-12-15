@@ -29,7 +29,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.hesrondev.MyFirstApp"
+      "package": "com.hesrondev.MyFirstApp",
+      "usesCleartextTraffic": true
     },
     "web": {
       "output": "static",

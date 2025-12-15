@@ -3,16 +3,18 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { AuthProvider, useAuth } from '@/contexts/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useOffline } from '@/hooks/use-offline';
-import { useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
-import { useAuth, AuthProvider } from '@/contexts/auth-context';
+import { useEffect } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+const DEV_BYPASS_AUTH = true;
 
 function RootLayoutContent() {
   const colorScheme = useColorScheme();
@@ -21,32 +23,38 @@ function RootLayoutContent() {
   const segments = useSegments();
   const router = useRouter();
 
-
   // check auth
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      console.log('🔧 [DEV MODE] Auth bypassed - accessing app directly');
+      return;
+    }
+
     if (isLoading) {
       return;
     }
+
     const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'modal';
     const isLoginpage = segments[0] === 'login';
+
     if (!isAuthenticated && inAuthGroup) {
       return router.replace('/login');
     } else if (isAuthenticated && isLoginpage) {
       return router.replace('/(tabs)');
-
     } else {
       console.log('✅ [ROUTER] Route access granted');
+    }
+  }, [segments, isLoading, isAuthenticated, router]);
 
+  useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      return;
     }
 
-  }, [segments, isLoading, isAuthenticated, router])
-
-
-    useEffect(() => {
-      if (segments[0] === '(tabs)' && ! isLoading && !isAuthenticated) {
-        refreshAuth();
-      }
-  }, [segments, isLoading, isAuthenticated, router])
+    if (segments[0] === '(tabs)' && !isLoading && !isAuthenticated) {
+      refreshAuth();
+    }
+  }, [segments, isLoading, isAuthenticated, router]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -60,15 +68,17 @@ function RootLayoutContent() {
         </View>
       )}
 
-      {/*Banner Sync */}
-
+      {/* Banner Sync */}
       {isOnline && pendingCount > 0 && (
-        <TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.syncBanner}
+          onPress={syncNow}
+        >
           <Ionicons
             name={isSyncing ? "sync" : "sync-outline"}
             size={16}
             color="#fff"
-          />E
+          />
           <Text style={styles.bannerText}>
             {isSyncing
               ? 'Synchronisation...'
@@ -119,7 +129,7 @@ const styles = StyleSheet.create({
 export default function RootLayout() {
   return (
     <AuthProvider>
-        <RootLayoutContent />
+      <RootLayoutContent />
     </AuthProvider>
   );
   

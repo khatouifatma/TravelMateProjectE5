@@ -46,7 +46,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setIsLoading(true);
             setError(null);
             const { user, tokens } = await auth.login(credentials);
-            await new Promise(resolve => setTimeout(resolve, 100));
             const state = await auth.getAuthState();
 
             setUser(state.user);
@@ -71,8 +70,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setIsLoading(true);
             setError(null);
             const { user, tokens } = await auth.register(data);
-            // Attendre un peu pour que SecureStore sauvegarde
-            await new Promise(resolve => setTimeout(resolve, 100));
             // Vérifier l'état après sauvegarde
             const state = await auth.getAuthState();
             setUser(state.user);
