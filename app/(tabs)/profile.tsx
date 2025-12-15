@@ -1,21 +1,36 @@
-
 import { useAuth } from '@/contexts/auth-context';
+import { useUser } from '@/contexts/user-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Alert } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
     const router = useRouter();
     const { logout } = useAuth();
+    const { user, updateUser } = useUser();
     const stats = [
-        { label: 'Voyages', value: '12', icon: 'map-outline', colors: ['#a855f7', '#ec4899'] as const },
+        { label: 'Trips', value: '12', icon: 'map-outline', colors: ['#a855f7', '#ec4899'] as const },
         { label: 'Photos', value: '250', icon: 'camera', colors: ['#3b82f6', '#06b6d4'] as const },
-        { label: 'Favoris', value: '12', icon: 'heart-outline', colors: ['#ef4444', '#f43f5e'] as const }
+        { label: 'Favorites', value: '12', icon: 'heart-outline', colors: ['#ef4444', '#f43f5e'] as const }
 
     ];
+
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 1,
+        });
+    
+        if (!result.canceled) {
+          updateUser({ avatar: result.assets[0].uri });
+        }
+    };
 
 
     return (
@@ -27,18 +42,24 @@ export default function ProfileScreen() {
                     style={styles.header}
                 >
 
-                    <Text style={styles.headerTitle}>Profil</Text>
+                    <Text style={styles.headerTitle}>Profile</Text>
 
                     {/*Profile card*/}
 
                     <View style={styles.profileCard}>
                         <View style={styles.profileHeader}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarEmoji}>😎​</Text>
-                            </View>
+                            <TouchableOpacity onPress={pickImage}>
+                                <View style={styles.avatar}>
+                                    {user.avatar ? (
+                                        <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+                                    ) : (
+                                        <Text style={styles.avatarEmoji}>😎​</Text>
+                                    )}
+                                </View>
+                            </TouchableOpacity>
                             <View style={styles.profileInfo}>
-                                <Text style={styles.profileName}>Odilon Hema</Text>
-                                <Text style={styles.profileEmail}>dummy@mail.com</Text>
+                                <Text style={styles.profileName}>{user.name}</Text>
+                                <Text style={styles.profileEmail}>{user.email}</Text>
                             </View>
                         </View>
                         {/*Stats*/}
@@ -66,14 +87,29 @@ export default function ProfileScreen() {
                 <View style={styles.content}>
                     <TouchableOpacity
                         style={styles.menuItem}
+                        onPress={() => router.push({ pathname: '/modal/edit-profile', params: { name: user.name, email: user.email } })}
+                    >
+                        <LinearGradient
+                            colors={['#3b82f6', '#06b6d4']}
+                            style={styles.menuItemIcon}
+                        >
+                            <Ionicons name='create-outline' size={24} color='white' />
+                        </LinearGradient>
+                        <View>
+                            <Text style={styles.menuItemTitle}>Edit profile</Text>
+                            <Text style={styles.menuItemSubTitle}>Change your name, email, etc.</Text>
+                        </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.menuItem}
                         onPress={async () => {
                             Alert.alert(
-                                'Déconnexion',
-                                'Etes-vous sûr de vouloir vous déconecter ?',
+                                'Logout',
+                                'Re you sure you want to logout ?',
                                 [
-                                    { text: 'Annuler', style: 'cancel' },
+                                    { text: 'Cancel', style: 'cancel' },
                                     {
-                                        text: 'Déconnexion',
+                                        text: 'Logout',
                                         style: 'destructive',
                                         onPress: async () => {
                                             await logout();
@@ -91,8 +127,8 @@ export default function ProfileScreen() {
                             <Ionicons name='log-out-outline' size={24} color='white' />
                         </LinearGradient>
                         <View>
-                            <Text style={styles.menuItemTitle}>Déconnexion</Text>
-                            <Text style={styles.menuItemSubTitle}>Se déconnecter de votre compte</Text>
+                            <Text style={styles.menuItemTitle}>Logout</Text>
+                            <Text style={styles.menuItemSubTitle}>Log out of your account</Text>
 
                         </View>
                     </TouchableOpacity>
@@ -144,7 +180,12 @@ const styles = StyleSheet.create({
         borderRadius: 40,
         backgroundColor: '#faf5ff',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
     },
     avatarEmoji: {
         fontSize: 40
