@@ -63,6 +63,10 @@ export default function TripDetailScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [activityType, setActivityType] = useState<Activity['type']>('visit');
 
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editedNoteContent, setEditedNoteContent] = useState('');
+
   useEffect(() => {
     loadTripDetails();
   }, [id]);
@@ -363,6 +367,70 @@ export default function TripDetailScreen() {
     }
   };
 
+  const handleAddNote = () => {
+    if (!newNoteContent.trim()) {
+      Alert.alert('Erreur', 'Veuillez écrire quelque chose dans votre note.');
+      return;
+    }
+
+    const newNote: Note = {
+      id: Date.now().toString(),
+      content: newNoteContent,
+      date: new Date().toISOString(),
+    };
+
+    setTrip((prev) => ({
+      ...prev!,
+      notes: [newNote, ...(prev?.notes || [])],
+    }));
+
+    setNewNoteContent('');
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    Alert.alert(
+      'Delete this note',
+      'Are you sure you want to delete this note ?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            setTrip((prev) => ({
+              ...prev!,
+              notes: prev!.notes!.filter((n) => n.id !== noteId),
+            }));
+          },
+        },
+      ]
+    );
+  };
+
+  const openEditNote = (note: Note) => {
+    setEditingNoteId(note.id);
+    setEditedNoteContent(note.content);
+  };
+
+  const handleUpdateNote = () => {
+    if (!editingNoteId) return;
+
+    setTrip((prev) => ({
+      ...prev!,
+      notes: prev!.notes!.map((n) =>
+        n.id === editingNoteId ? { ...n, content: editedNoteContent } : n
+      ),
+    }));
+
+    setEditingNoteId(null);
+    setEditedNoteContent('');
+  };
+
+  const cancelEditNote = () => {
+    setEditingNoteId(null);
+    setEditedNoteContent('');
+  };
+
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -526,16 +594,70 @@ export default function TripDetailScreen() {
 
           {selectedTab === 'notes' && (
             <View style={styles.section}>
+              <View style={styles.addNoteContainer}>
+                <TextInput
+                  style={styles.noteInput}
+                  placeholder="write your note here..."
+                  placeholderTextColor="#9ca3af"
+                  multiline
+                  value={newNoteContent}
+                  onChangeText={setNewNoteContent}
+                />
+                <TouchableOpacity style={styles.addNoteButton} onPress={handleAddNote}>
+                  <LinearGradient
+                    colors={['#a855f7', '#ec4899']}
+                    style={styles.addButtonGradient}
+                  >
+                    <Ionicons name="add" size={20} color="white" />
+                    <Text style={styles.addButtonText}>Add a note</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+
               {trip.notes?.map((note) => (
                 <View key={note.id} style={styles.noteCard}>
-                  <Text style={styles.noteDate}>
-                    {new Date(note.date).toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </Text>
-                  <Text style={styles.noteContent}>{note.content}</Text>
+                  {editingNoteId === note.id ? (
+                    <>
+                      <TextInput
+                        style={styles.noteEditTextInput}
+                        value={editedNoteContent}
+                        onChangeText={setEditedNoteContent}
+                        multiline
+                        autoFocus
+                      />
+                      <View style={styles.noteEditActions}>
+                        <TouchableOpacity onPress={cancelEditNote} style={styles.noteEditButton}>
+                          <Ionicons name="close-circle-outline" size={24} color="#6b7280" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleUpdateNote} style={styles.noteEditButton}>
+                          <Ionicons name="checkmark-circle-outline" size={24} color="#22c55e" />
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <View style={styles.noteHeader}>
+                        <Text style={styles.noteDate}>
+                          {new Date(note.date).toLocaleDateString('en-EN', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </Text>
+                        <View style={styles.noteActions}>
+                          <TouchableOpacity onPress={() => openEditNote(note)}>
+                            <Ionicons name="create-outline" size={20} color="#6b7280" />
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => handleDeleteNote(note.id)}>
+                            <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      <Text style={styles.noteContent}>{note.content}</Text>
+                    </>
+                  )}
                 </View>
               ))}
             </View>
@@ -879,6 +1001,33 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: 'flex-start',
   },
+  addNoteContainer: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    marginBottom: 12,
+  },
+  noteInput: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    color: '#111827',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 12,
+  },
+  addNoteButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
   noteCard: {
     backgroundColor: 'white',
     borderRadius: 16,
@@ -888,6 +1037,37 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  noteHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  noteActions: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  noteEditTextInput: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    color: '#111827',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: 12,
+  },
+  noteEditActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 16,
+    marginTop: 8,
+  },
+  noteEditButton: {
+    padding: 4,
   },
   noteDate: {
     color: '#a855f7',
