@@ -1,0 +1,27 @@
+# Par défaut : texte en LF
+* text=auto eol=lf
+
+# JavaScript / TypeScript
+*.js   text eol=lf
+*.jsx  text eol=lf
+*.ts   text eol=lf
+*.tsx  text eol=lf
+
+# JSON / Config
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Markdown
+*.md   text eol=lf
+
+# Shell
+*.sh   text eol=lf
+
+# Binaries (pas de conversion)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.svg  binary
+*.ico  binary
