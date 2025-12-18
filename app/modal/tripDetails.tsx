@@ -1,9 +1,12 @@
+import { useFavorites } from '@/contexts/favoris-context';
+import { API } from '@/services/api';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Modal,
@@ -50,8 +53,10 @@ export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   
+  const { isFavorite, toggleFavorite } = useFavorites();
+  
   const [trip, setTrip] = useState<Trip | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'photos' | 'activities' | 'notes'>('photos');
   const [showAddActivity, setShowAddActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
@@ -72,146 +77,32 @@ export default function TripDetailScreen() {
   }, [id]);
 
   const loadTripDetails = async () => {
-    const mockTrips: Record<string, Trip> = {
-      '1': {
-        id: '1',
-        title: 'Trip to Bali',
-        destination: 'Bali, Indonesia',
-        startDate: '2024-08-10',
-        endDate: '2024-08-20',
-        description: 'Exploring the beautiful temples and beaches of Bali!',
-        image: 'bali',
-        photos: ['bali', 'bali', 'bali'],
-        activities: [
-          {
-            id: '1',
-            title: 'Visit Tanah Lot Temple',
-            description: 'Beautiful temple by the sea',
-            date: '2024-08-11',
-            location: 'Tanah Lot',
-            type: 'visit',
-          },
-          {
-            id: '2',
-            title: 'Surfing at Kuta Beach',
-            description: 'Great waves for beginners',
-            date: '2024-08-12',
-            location: 'Kuta Beach',
-            type: 'activity',
-          },
-        ],
-        notes: [
-          {
-            id: '1',
-            content: 'The temples are breathtaking! Don\'t forget sunscreen.',
-            date: '2024-08-11',
-          },
-        ],
-      },
-      '2': {
-        id: '2',
-        title: 'Trip to Tokyo',
-        destination: 'Tokyo, Japan',
-        startDate: '2024-09-15',
-        endDate: '2024-09-25',
-        description: 'Discovering the vibrant culture of Tokyo!',
-        image: 'tokyo',
-        photos: ['tokyo', 'tokyo', 'tokyo', 'tokyo', 'tokyo'],
-        activities: [
-          {
-            id: '1',
-            title: 'Visit Senso-ji Temple',
-            description: 'Ancient Buddhist temple',
-            date: '2024-09-16',
-            location: 'Asakusa',
-            type: 'visit',
-          },
-          {
-            id: '2',
-            title: 'Ramen tasting',
-            description: 'Best ramen in Shibuya',
-            date: '2024-09-17',
-            location: 'Shibuya',
-            type: 'food',
-          },
-          {
-            id: '3',
-            title: 'Tokyo Skytree',
-            description: 'Amazing city views',
-            date: '2024-09-18',
-            location: 'Sumida',
-            type: 'visit',
-          },
-        ],
-        notes: [
-          {
-            id: '1',
-            content: 'Tokyo is incredible! So clean and organized.',
-            date: '2024-09-15',
-          },
-          {
-            id: '2',
-            content: 'The food is absolutely amazing. Already planning to come back!',
-            date: '2024-09-17',
-          },
-        ],
-      },
-      '3': {
-        id: '3',
-        title: 'Trip to Paris',
-        destination: 'Paris, France',
-        startDate: '2024-12-20',
-        endDate: '2024-12-30',
-        description: 'Amazing trip to the city of lights!',
-        image: 'paris',
-        photos: ['paris', 'paris', 'paris', 'paris', 'paris', 'paris', 'paris', 'paris'],
-        activities: [
-          {
-            id: '1',
-            title: 'Visit Eiffel Tower',
-            description: 'Iconic landmark visit',
-            date: '2024-12-21',
-            location: 'Champ de Mars',
-            type: 'visit',
-          },
-          {
-            id: '2',
-            title: 'Louvre Museum',
-            description: 'See the Mona Lisa',
-            date: '2024-12-22',
-            location: 'Louvre',
-            type: 'visit',
-          },
-          {
-            id: '3',
-            title: 'Dinner at Le Jules Verne',
-            description: 'Fine dining experience',
-            date: '2024-12-23',
-            location: 'Eiffel Tower',
-            type: 'food',
-          },
-        ],
-        notes: [
-          {
-            id: '1',
-            content: 'First day was amazing! Weather perfect.',
-            date: '2024-12-20',
-          },
-          {
-            id: '2',
-            content: 'The Eiffel Tower at night is magical ✨',
-            date: '2024-12-21',
-          },
-        ],
-      },
-    };
-    
-    const selectedTrip = mockTrips[id as string] || mockTrips['3'];
-    setTrip(selectedTrip);
+    try {
+      setIsLoading(true);
+      
+      const tripData = await API.getTripById(id);
+      
+      if (tripData) {
+        setTrip({
+          ...tripData,
+          activities: tripData.activities || [],
+          notes: tripData.notes || [],
+        });
+      } else {
+        Alert.alert('Error', 'Trip not found');
+        router.back();
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load trip details');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
+  const handleToggleFavorite = () => {
+    if (trip) {
+      toggleFavorite(trip.id);
+    }
   };
 
   const handleAddActivity = () => {
@@ -432,18 +323,29 @@ export default function TripDetailScreen() {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#ED7868" />
+          <Text style={styles.loadingText}>Loading trip details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!trip) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Chargement...</Text>
+          <Text style={styles.loadingText}>Trip not found</Text>
         </View>
       </SafeAreaView>
     );
@@ -454,7 +356,11 @@ export default function TripDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.imageContainer}>
           <Image
-            source={IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES]}
+            source={
+              trip.image.startsWith('http') 
+                ? { uri: trip.image }
+                : IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || IMAGES_SOURCES.paris
+            }
             style={styles.headerImage}
           />
           <LinearGradient
@@ -465,12 +371,12 @@ export default function TripDetailScreen() {
           <SafeAreaView edges={['top']} style={styles.headerButtons}>
             <TouchableOpacity
               style={styles.favoriteButtonHeader}
-              onPress={toggleFavorite}
+              onPress={handleToggleFavorite}
             >
               <Ionicons 
-                name={isFavorite ? "heart" : "heart-outline"} 
+                name={isFavorite(trip.id) ? "heart" : "heart-outline"} 
                 size={24} 
-                color={isFavorite ? "#ec4899" : "white"} 
+                color={isFavorite(trip.id) ? "#ED7868" : "white"} 
               />
             </TouchableOpacity>
           </SafeAreaView>
@@ -489,8 +395,8 @@ export default function TripDetailScreen() {
             <View style={styles.dateInfo}>
               <Ionicons name="calendar-outline" size={20} color="#6b7280" />
               <Text style={styles.dateText}>
-                {new Date(trip.startDate).toLocaleDateString('fr-FR')} -{' '}
-                {new Date(trip.endDate).toLocaleDateString('fr-FR')}
+                {new Date(trip.startDate).toLocaleDateString('en-US')} -{' '}
+                {new Date(trip.endDate).toLocaleDateString('en-US')}
               </Text>
             </View>
             <Text style={styles.description}>{trip.description}</Text>
@@ -510,7 +416,7 @@ export default function TripDetailScreen() {
               onPress={() => setSelectedTab('activities')}
             >
               <Text style={[styles.tabText, selectedTab === 'activities' && styles.tabTextActive]}>
-                Activités ({trip.activities?.length || 0})
+                Activities ({trip.activities?.length || 0})
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -528,7 +434,11 @@ export default function TripDetailScreen() {
               {trip.photos?.map((photo, idx) => (
                 <Image
                   key={idx}
-                  source={IMAGES_SOURCES[photo as keyof typeof IMAGES_SOURCES]}
+                  source={
+                    photo.startsWith('http')
+                      ? { uri: photo }
+                      : IMAGES_SOURCES[photo as keyof typeof IMAGES_SOURCES] || IMAGES_SOURCES.paris
+                  }
                   style={styles.photoItem}
                 />
               ))}
@@ -546,13 +456,10 @@ export default function TripDetailScreen() {
                   setShowAddActivity(true);
                 }}
               >
-                <LinearGradient
-                  colors={['#a855f7', '#ec4899']}
-                  style={styles.addButtonGradient}
-                >
+                <View style={styles.addButtonGradient}>
                   <Ionicons name="add" size={20} color="white" />
-                  <Text style={styles.addButtonText}>Ajouter une activité</Text>
-                </LinearGradient>
+                  <Text style={styles.addButtonText}>Add activity</Text>
+                </View>
               </TouchableOpacity>
 
               {trip.activities?.map((activity) => (
@@ -562,7 +469,7 @@ export default function TripDetailScreen() {
                       <Ionicons
                         name={getActivityIcon(activity.type)}
                         size={24}
-                        color="#a855f7"
+                        color="#ED7868"
                       />
                     </View>
                     <View style={styles.activityContent}>
@@ -575,7 +482,7 @@ export default function TripDetailScreen() {
                       )}
                       <Text style={styles.activityDescription}>{activity.description}</Text>
                       <Text style={styles.activityDate}>
-                        {new Date(activity.date).toLocaleDateString('fr-FR')}
+                        {new Date(activity.date).toLocaleDateString('en-US')}
                       </Text>
                     </View>
                     <View style={styles.activityActions}>
@@ -597,20 +504,17 @@ export default function TripDetailScreen() {
               <View style={styles.addNoteContainer}>
                 <TextInput
                   style={styles.noteInput}
-                  placeholder="write your note here..."
+                  placeholder="Write your note here..."
                   placeholderTextColor="#9ca3af"
                   multiline
                   value={newNoteContent}
                   onChangeText={setNewNoteContent}
                 />
                 <TouchableOpacity style={styles.addNoteButton} onPress={handleAddNote}>
-                  <LinearGradient
-                    colors={['#a855f7', '#ec4899']}
-                    style={styles.addButtonGradient}
-                  >
+                  <View style={styles.addButtonGradient}>
                     <Ionicons name="add" size={20} color="white" />
                     <Text style={styles.addButtonText}>Add a note</Text>
-                  </LinearGradient>
+                  </View>
                 </TouchableOpacity>
               </View>
 
@@ -638,7 +542,7 @@ export default function TripDetailScreen() {
                     <>
                       <View style={styles.noteHeader}>
                         <Text style={styles.noteDate}>
-                          {new Date(note.date).toLocaleDateString('en-EN', {
+                          {new Date(note.date).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric',
@@ -674,7 +578,7 @@ export default function TripDetailScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {editingActivity ? 'Modifier' : 'Nouvelle'} Activité
+                {editingActivity ? 'Edit' : 'New'} Activity
               </Text>
               <TouchableOpacity
                 onPress={() => {
@@ -688,12 +592,12 @@ export default function TripDetailScreen() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.label}>Titre *</Text>
+              <Text style={styles.label}>Title *</Text>
               <TextInput
                 style={styles.input}
                 value={activityTitle}
                 onChangeText={setActivityTitle}
-                placeholder="Ex: Visite de la Tour Eiffel"
+                placeholder="Ex: Visit Eiffel Tower"
                 placeholderTextColor="#9ca3af"
               />
 
@@ -714,7 +618,7 @@ export default function TripDetailScreen() {
                 ))}
               </ScrollView>
 
-              <Text style={styles.label}>Lieu</Text>
+              <Text style={styles.label}>Location</Text>
               <TextInput
                 style={styles.input}
                 value={activityLocation}
@@ -734,7 +638,7 @@ export default function TripDetailScreen() {
                   }
                 }}
               >
-                <Ionicons name="calendar-outline" size={20} color="#a855f7" />
+                <Ionicons name="calendar-outline" size={20} color="#ED7868" />
                 <Text style={styles.datePickerText}>{formatDate(activityDate)}</Text>
                 <Ionicons name="chevron-down" size={20} color="#6b7280" />
               </TouchableOpacity>
@@ -760,7 +664,7 @@ export default function TripDetailScreen() {
                     style={styles.datePickerDoneButton}
                     onPress={() => setShowDatePicker(false)}
                   >
-                    <Text style={styles.datePickerDoneText}>Confirmer</Text>
+                    <Text style={styles.datePickerDoneText}>Confirm</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -770,7 +674,7 @@ export default function TripDetailScreen() {
                 style={[styles.input, styles.textArea]}
                 value={activityDescription}
                 onChangeText={setActivityDescription}
-                placeholder="Décrivez l'activité..."
+                placeholder="Describe the activity..."
                 placeholderTextColor="#9ca3af"
                 multiline
                 numberOfLines={4}
@@ -780,14 +684,11 @@ export default function TripDetailScreen() {
                 style={styles.submitButton}
                 onPress={editingActivity ? handleUpdateActivity : handleAddActivity}
               >
-                <LinearGradient
-                  colors={['#a855f7', '#ec4899']}
-                  style={styles.submitButtonGradient}
-                >
+                <View style={styles.submitButtonGradient}>
                   <Text style={styles.submitButtonText}>
-                    {editingActivity ? 'Modifier' : 'Ajouter'}
+                    {editingActivity ? 'Update' : 'Add'}
                   </Text>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -810,6 +711,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: '#6b7280',
+    marginTop: 12,
   },
   imageContainer: {
     position: 'relative',
@@ -906,7 +808,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabActive: {
-    backgroundColor: '#a855f7',
+    backgroundColor: '#ED7868',
   },
   tabText: {
     color: '#6b7280',
@@ -940,6 +842,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     gap: 8,
+    backgroundColor:'#a5bb80'
   },
   addButtonText: {
     color: 'white',
@@ -964,7 +867,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#faf5ff',
+    backgroundColor: '#fef5f3',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1070,7 +973,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   noteDate: {
-    color: '#a855f7',
+    color: '#ED7868',
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 8,
@@ -1138,7 +1041,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   typeButtonActive: {
-    backgroundColor: '#a855f7',
+    backgroundColor: '#ED7868',
   },
   datePickerButton: {
     flexDirection: 'row',
@@ -1156,7 +1059,7 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   datePickerDoneButton: {
-    backgroundColor: '#a855f7',
+    backgroundColor: '#ED7868',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -1181,5 +1084,10 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+    backgroundColor:'#ED7868',
+    width:200,
+    textAlign:'center',
+    padding:13,
+    borderRadius:20
   },
 });
