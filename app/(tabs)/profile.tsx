@@ -1,71 +1,112 @@
 import { useAuth } from '@/contexts/auth-context';
-import { useUser } from '@/contexts/user-context';
+import { API } from '@/services/api';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
+
+interface Trip {
+  id: string;
+  title: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  image: string;
+  photos: string[];
+}
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { logout } = useAuth();
-    const { user, updateUser } = useUser();
-    const stats = [
-        { label: 'Trips', value: '12', icon: 'map-outline', colors: ['#a855f7', '#ec4899'] as const },
-        { label: 'Photos', value: '250', icon: 'camera', colors: ['#3b82f6', '#06b6d4'] as const },
-        { label: 'Favorites', value: '12', icon: 'heart-outline', colors: ['#ef4444', '#f43f5e'] as const }
+    const { logout, user } = useAuth();
+    const [trips, setTrips] = useState<Trip[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
+    const loadTrips = async () => {
+        try {
+            setIsLoading(true);
+            const data = await API.getTrips();
+            setTrips(data);
+        } catch (error) {
+            console.error('Error loading trips:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            loadTrips();
+        }, [])
+    );
+
+    const totalTrips = trips.length;
+    const totalPhotos = trips.reduce((acc, trip) => acc + (trip.photos?.length || 0), 0);
+    
+    const countries = new Set(
+        trips
+            .map(t => {
+                const parts = t.destination.split(',');
+                return parts[parts.length - 1]?.trim();
+            })
+            .filter(country => country && country.length > 0)
+    );
+
+    const stats = [
+        { label: 'Trips', value: totalTrips.toString(), icon: 'map-outline', colors: ['#ED7868', '#a5bb80'] as const },
+        { label: 'Photos', value: totalPhotos.toString(), icon: 'camera', colors: ['#a5bb80', '#b8c994'] as const },
+        { label: 'Countries', value: countries.size.toString(), icon: 'globe-outline', colors: ['#ED7868', '#f4a68d'] as const }
     ];
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 1,
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
         });
-    
+
         if (!result.canceled) {
-          updateUser({ avatar: result.assets[0].uri });
+            setUserAvatar(result.assets[0].uri);
         }
     };
-
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/*Header*/}
-                <LinearGradient
-                    colors={['#a855f7', '#ec4899']}
-                    style={styles.header}
-                >
-
+                <View style={styles.header}>
                     <Text style={styles.headerTitle}>Profile</Text>
 
                     {/*Profile card*/}
-
                     <View style={styles.profileCard}>
                         <View style={styles.profileHeader}>
                             <TouchableOpacity onPress={pickImage}>
                                 <View style={styles.avatar}>
-                                    {user.avatar ? (
-                                        <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+                                    {userAvatar ? (
+                                        <Image source={{ uri: userAvatar }} style={styles.avatarImage} />
                                     ) : (
                                         <Text style={styles.avatarEmoji}>😎​</Text>
                                     )}
                                 </View>
                             </TouchableOpacity>
                             <View style={styles.profileInfo}>
-                                <Text style={styles.profileName}>{user.name}</Text>
-                                <Text style={styles.profileEmail}>{user.email}</Text>
+                                <Text style={styles.profileName}>{user?.name || 'Utilisateur'}</Text>
+                                <Text style={styles.profileEmail}>{user?.email || 'email@example.com'}</Text>
                             </View>
                         </View>
+                        
                         {/*Stats*/}
-                        <View style={styles.statsGrid}>
-                            {
-                                stats.map((stat, idx) => (
+                        {isLoading ? (
+                            <View style={styles.statsLoading}>
+                                <ActivityIndicator size="small" color="#a5bb80" />
+                            </View>
+                        ) : (
+                            <View style={styles.statsGrid}>
+                                {stats.map((stat, idx) => (
                                     <View key={idx} style={styles.statItem}>
                                         <LinearGradient
                                             colors={stat.colors}
@@ -74,23 +115,27 @@ export default function ProfileScreen() {
                                         </LinearGradient>
                                         <Text style={styles.statValue}>{stat.value}</Text>
                                         <Text style={styles.statLabel}>{stat.label}</Text>
-
                                     </View>
-                                ))
-                            }
-                        </View>
+                                ))}
+                            </View>
+                        )}
                     </View>
-                </LinearGradient>
-
+                </View>
 
                 {/*Content*/}
                 <View style={styles.content}>
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => router.push({ pathname: '/modal/edit-profile', params: { name: user.name, email: user.email } })}
+                        onPress={() => router.push({ 
+                            pathname: '/modal/edit-profile', 
+                            params: { 
+                                name: user?.name || '', 
+                                email: user?.email || '' 
+                            } 
+                        })}
                     >
                         <LinearGradient
-                            colors={['#3b82f6', '#06b6d4']}
+                            colors={['#a5bb80', '#b8c994']}
                             style={styles.menuItemIcon}
                         >
                             <Ionicons name='create-outline' size={24} color='white' />
@@ -100,12 +145,13 @@ export default function ProfileScreen() {
                             <Text style={styles.menuItemSubTitle}>Change your name, email, etc.</Text>
                         </View>
                     </TouchableOpacity>
+                    
                     <TouchableOpacity
                         style={styles.menuItem}
                         onPress={async () => {
                             Alert.alert(
                                 'Logout',
-                                'Re you sure you want to logout ?',
+                                'Are you sure you want to logout ?',
                                 [
                                     { text: 'Cancel', style: 'cancel' },
                                     {
@@ -129,14 +175,11 @@ export default function ProfileScreen() {
                         <View>
                             <Text style={styles.menuItemTitle}>Logout</Text>
                             <Text style={styles.menuItemSubTitle}>Log out of your account</Text>
-
                         </View>
                     </TouchableOpacity>
-                    
                 </View>
             </ScrollView>
         </SafeAreaView>
-
     )
 }
 
@@ -151,6 +194,7 @@ const styles = StyleSheet.create({
         paddingBottom: 128,
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
+        backgroundColor:'#a5bb80'
     },
     headerTitle: {
         fontSize: 32,
@@ -202,6 +246,10 @@ const styles = StyleSheet.create({
     profileEmail: {
         fontSize: 14,
         color: '#6b7280'
+    },
+    statsLoading: {
+        paddingVertical: 32,
+        alignItems: 'center',
     },
     statsGrid: {
         flexDirection: 'row',
@@ -261,9 +309,7 @@ const styles = StyleSheet.create({
         marginBottom: 4
     },
     menuItemSubTitle: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#6b7280'
     }
-
-
 });
