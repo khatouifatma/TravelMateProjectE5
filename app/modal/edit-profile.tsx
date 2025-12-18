@@ -1,72 +1,293 @@
-import { useUser } from '@/contexts/user-context';
+import { API } from '@/services/api';
+import { auth } from '@/services/auth';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
+  avatar?: string | null;
+}
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ name: string, email: string }>();
-  const { updateUser } = useUser();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [originalProfile, setOriginalProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    if (params.name) {
-      setName(params.name);
-    }
-    if (params.email) {
-      setEmail(params.email);
-    }
+    loadProfile();
   }, []);
 
-  const handleSave = () => {
-    updateUser({ name, email });
-    router.back();
+  const loadProfile = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/users/profile`, {
+        headers: await getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load profile');
+      }
+
+      const profile: UserProfile = await response.json();
+      setOriginalProfile(profile);
+      setName(profile.name);
+      setEmail(profile.email);
+      setAvatar(profile.avatar || null);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      Alert.alert('Erreur', 'Impossible de charger le profil');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const pickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission requise',
+          'Nous avons besoin de votre permission pour accéder à vos photos'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadAvatar(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Erreur', 'Impossible de sélectionner une image');
+    }
+  };
+
+  const uploadAvatar = async (uri: string) => {
+    try {
+      setIsUploadingAvatar(true);
+      const uploadedUrl = await API.uploadImage(uri);
+      setAvatar(uploadedUrl);
+      Alert.alert('Succès', 'Photo de profil mise à jour');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      Alert.alert('Erreur', "Impossible d'uploader la photo");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      Alert.alert('Erreur', 'Le nom ne peut pas être vide');
+      return;
+    }
+
+    if (!email.trim() || !email.includes('@')) {
+      Alert.alert('Erreur', 'Veuillez entrer un email valide');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const response = await fetch(`${API_BASE_URL}/users/profile`, {
+        method: 'PATCH',
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          avatar: avatar,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+
+      Alert.alert('Succès', 'Profil mis à jour avec succès', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
+    } catch (error: any) {
+      console.error('Error saving profile:', error);
+      Alert.alert('Erreur', error.message || 'Impossible de mettre à jour le profil');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const hasChanges = () => {
+    if (!originalProfile) return false;
+    return (
+      name !== originalProfile.name ||
+      email !== originalProfile.email ||
+      avatar !== originalProfile.avatar
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#ED7868" />
+          <Text style={styles.loadingText}>Chargement du profil...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit profile</Text>
-        <View style={{ width: 24 }} />
-      </View>
+  
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Name</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Your name"
-        />
-
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Your email"
-          keyboardType="email-address"
-        />
-
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <LinearGradient
-            colors={['#a855f7', '#ec4899']}
-            style={styles.saveButtonGradient}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarContainer}>
+            {avatar ? (
+              <Image source={{ uri: avatar }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={48} color="#9ca3af" />
+              </View>
+            )}
+            {isUploadingAvatar && (
+              <View style={styles.uploadingOverlay}>
+                <ActivityIndicator size="small" color="white" />
+              </View>
+            )}
+          </View>
+          <TouchableOpacity 
+            style={styles.changePhotoButton} 
+            onPress={pickImage}
+            disabled={isUploadingAvatar}
           >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </LinearGradient>
+            <Ionicons name="camera" size={20} color="#ED7868" />
+            <Text style={styles.changePhotoText}>
+              {isUploadingAvatar ? 'Upload en cours...' : 'Changer la photo'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nom complet</Text>
+            <View style={styles.inputContainer}>
+              <Ionicons name="person-outline" size={20} color="#6b7280" />
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Votre nom"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={20} color="#6b7280" />
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="votre@email.com"
+                placeholderTextColor="#9ca3af"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+
+          {originalProfile && (
+            <View style={styles.infoCard}>
+              <Ionicons name="information-circle-outline" size={20} color="#6b7280" />
+              <Text style={styles.infoText}>
+                Rôle : {originalProfile.roles.join(', ')}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            (!hasChanges() || isSaving) && styles.saveButtonDisabled,
+          ]}
+          onPress={handleSave}
+          disabled={!hasChanges() || isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <>
+              <Ionicons name="checkmark-circle-outline" size={24} color="white" />
+              <Text style={styles.saveButtonText}>
+                {hasChanges() ? 'Enregistrer les modifications' : 'Aucune modification'}
+              </Text>
+            </>
+          )}
         </TouchableOpacity>
-      </View>
+
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.cancelButtonText}>Annuler</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </SafeAreaView>
   );
+}
+
+const API_BASE_URL = 'http://localhost:4000';
+
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const tokens = await auth.getTokens();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (tokens?.accessToken) {
+    headers['Authorization'] = `Bearer ${tokens.accessToken}`;
+  }
+  
+  return headers;
 }
 
 const styles = StyleSheet.create({
@@ -74,51 +295,174 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9fafb',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6b7280',
+  },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
     paddingVertical: 16,
+    backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#111827',
   },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+  },
+  avatarSection: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    backgroundColor: 'white',
+    marginBottom: 16,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: '#ED7868',
+  },
+  avatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: '#e5e7eb',
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  changePhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#fef5f3',
+    borderWidth: 1,
+    borderColor: '#ED7868',
+  },
+  changePhotoText: {
+    color: '#ED7868',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   form: {
-    padding: 24,
+    paddingHorizontal: 24,
+    gap: 20,
+  },
+  inputGroup: {
+    gap: 8,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
-    marginBottom: 8,
+    color: '#374151',
   },
-  input: {
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#111827',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    marginBottom: 24,
+    gap: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#111827',
+  },
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eff6ff',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+    marginTop: 8,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#374151',
   },
   saveButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 16,
-  },
-  saveButtonGradient: {
-    paddingVertical: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ED7868',
+    marginHorizontal: 24,
+    marginTop: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: '#ED7868',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#d1d5db',
+    shadowOpacity: 0,
   },
   saveButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  cancelButton: {
+    alignItems: 'center',
+    marginHorizontal: 24,
+    marginTop: 12,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  cancelButtonText: {
+    color: '#6b7280',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
