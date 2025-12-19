@@ -61,7 +61,7 @@ npm install
 3. Lancer le serveur :
 
 ```bash
-node server.js
+npm start
 ```
 
 ⚠️ Le backend doit impérativement être lancé pour que l’application fonctionne correctement.
