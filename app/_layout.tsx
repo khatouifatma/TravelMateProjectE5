@@ -1,8 +1,7 @@
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 import { FavoritesProvider } from '@/contexts/favoris-context';
-import { ThemeProvider as AppThemeProvider } from '@/contexts/theme-context';
+import { ThemeProvider as AppThemeProvider, useTheme } from '@/contexts/theme-context';
 import { UserProvider } from '@/contexts/user-context';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useOffline } from '@/hooks/use-offline';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
@@ -11,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import 'react-native-reanimated';
+import { Colors } from '@/constants/theme';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -18,8 +18,32 @@ export const unstable_settings = {
 
 const DEV_AUTH_BYPASS = __DEV__;
 
+const lightTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: Colors.light.primary,
+    background: Colors.light.background,
+    card: Colors.light.background,
+    text: Colors.light.text,
+    border: 'transparent',
+  },
+};
+
+const darkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: Colors.dark.primary,
+    background: Colors.dark.background,
+    card: Colors.dark.background,
+    text: Colors.dark.text,
+    border: 'transparent',
+  },
+};
+
 function RootLayoutContent() {
-  const colorScheme = useColorScheme();
+  const { theme } = useTheme();
   const { isOnline, pendingCount, isSyncing, syncNow } = useOffline();
   const { isAuthenticated, isLoading, refreshAuth } = useAuth();
   const segments = useSegments();
@@ -87,7 +111,7 @@ useEffect(() => {
 
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={theme === 'dark' ? darkTheme : lightTheme}>
       {/*Banner Offline*/}
       {!isOnline && (
         <View style={styles.offlineBanner}>
@@ -120,7 +144,7 @@ useEffect(() => {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
   );
 }

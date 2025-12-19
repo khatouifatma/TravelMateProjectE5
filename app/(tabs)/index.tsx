@@ -214,7 +214,7 @@ export default function HomeScreen() {
                 value={theme === 'dark'}
               />
               <TouchableOpacity style={styles.notificationBtn}>
-                <Ionicons name="notifications-outline" size={24} color="#6b7280" />
+                <Ionicons name="notifications-outline" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
           </View>
@@ -223,7 +223,7 @@ export default function HomeScreen() {
           <View style={styles.statsContainer}>
             {stats.map((stat, index) => (
               <View key={index} style={styles.statCard}>
-                <Ionicons name={stat.icon} size={24} color="#ED7868" />
+                <Ionicons name={stat.icon} size={24} color={colors.primary} />
                 <Text style={styles.statValue}>{stat.value}</Text>
                 <Text style={styles.statLabel}>{stat.label}</Text>
               </View>
@@ -246,7 +246,7 @@ export default function HomeScreen() {
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#ED7868" />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : upcomingTrips.length === 0 ? (
           <View style={styles.emptyState}>
@@ -275,7 +275,7 @@ export default function HomeScreen() {
               <View style={styles.tripInfo}>
                 <Text style={styles.tripTitle}>{trip.title}</Text>
                 <View style={styles.tripDate}>
-                  <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                  <Ionicons name="calendar-outline" size={16} color={colors.text} />
                   <Text style={styles.tripDateText}>{trip.date}</Text>
                 </View>
                 <View style={styles.tripBadge}>
@@ -284,7 +284,7 @@ export default function HomeScreen() {
                   </Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9ca3af" style={styles.tripChevron} />
+              <Ionicons name="chevron-forward" size={20} color={colors.text} style={styles.tripChevron} />
             </TouchableOpacity>
           ))
         )}
@@ -317,21 +317,21 @@ export default function HomeScreen() {
           <Text style={{ ...styles.sectionTitle, paddingHorizontal: 12 }}>Quick Actions</Text>
           <View style={styles.quickActionsGrid}>
             <TouchableOpacity onPress={handleAddTrip}>
-              <View style={[styles.quickActionCard, { backgroundColor: '#ED7868' }]}>
+              <View style={[styles.quickActionCard, { backgroundColor: colors.primary }]}>
                 <Ionicons name="add-circle-outline" size={24} color="#fff" />
                 <Text style={styles.quickActionLabel}>New Trip</Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleAddPhoto}>
-              <View style={[styles.quickActionCard, { backgroundColor: '#a5bb80' }]}>
+              <View style={[styles.quickActionCard, { backgroundColor: colors.primary }]}>
                 <Ionicons name="camera-outline" size={24} color="#fff" />
                 <Text style={styles.quickActionLabel}>Add Photo</Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleMapPress}>
-              <View style={[styles.quickActionCard, { backgroundColor: '#6b7280' }]}>
+              <View style={[styles.quickActionCard, { backgroundColor: colors.text }]}>
                 <Ionicons name="map-outline" size={24} color="#fff" />
                 <Text style={styles.quickActionLabel}>Map View</Text>
               </View>
@@ -361,7 +361,7 @@ export default function HomeScreen() {
                   onPress={() => handleTripPress(activity.tripId)}
                 >
                   <Text style={styles.activityIcon}>
-                    <Ionicons name={getActivityIcon(activity.type)} size={24} color="#6b7280" />
+                    <Ionicons name={getActivityIcon(activity.type)} size={24} color={colors.text} />
                   </Text>
                   <View style={styles.activityInfo}>
                     <Text style={styles.activityText}>
@@ -391,6 +391,7 @@ const getStyles = (colors: { primary: any; background: any; card: any; text: any
     paddingHorizontal: 24,
     paddingTop: 8,
     paddingBottom: 24,
+    backgroundColor: colors.primary,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     shadowColor: '#000',
@@ -398,14 +399,12 @@ const getStyles = (colors: { primary: any; background: any; card: any; text: any
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 3,
-    backgroundColor: '#a5bb80'
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
-
+    marginBottom: 24
   },
   greetingText: {
     color: colors.text,
@@ -427,7 +426,6 @@ const getStyles = (colors: { primary: any; background: any; card: any; text: any
   statsContainer: {
     flexDirection: 'row',
     gap: 12,
-
   },
   statCard: {
     flex: 1,
