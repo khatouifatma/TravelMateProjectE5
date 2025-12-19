@@ -87,13 +87,19 @@ export default function ProfileScreen() {
                 <View style={styles.header}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Text style={styles.headerTitle}>Profile</Text>
-                        <Switch
-                            trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
-                            thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
-                            ios_backgroundColor="#3e3e3e"
-                            onValueChange={toggleTheme}
-                            value={theme === 'dark'}
-                        />
+
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Text style={styles.themeLabel}>
+                                {theme === 'dark' ? 'Dark' : 'Light'}
+                            </Text>
+                            <Switch
+                                trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
+                                thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
+                                ios_backgroundColor="#3e3e3e"
+                                onValueChange={toggleTheme}
+                                value={theme === 'dark'}
+                            />
+                        </View>
                     </View>
 
                     {/*Profile card*/}
@@ -326,5 +332,11 @@ const getStyles = (colors: { primary: any; background: any; card: any; text: any
     menuItemSubTitle: {
         fontSize: 14,
         color: colors.text
-    }
+    },
+    themeLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#fff',
+    },
+
 });
