@@ -1,9 +1,8 @@
 import { useAuth } from "@/contexts/auth-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView } from "react-native";
+import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
@@ -68,23 +67,26 @@ export default function LoginScreen() {
                     showsHorizontalScrollIndicator={false}
                     keyboardShouldPersistTaps='handled'
                 >
-                    <LinearGradient
-                        colors={['#a855f7', '#ec4899']}
+                    <View
                         style={styles.header}
                     >
-                        <TouchableOpacity
-                            onPress={() => router.back()}
-                            style={styles.backButton}
-                        >
-                            <Ionicons name="arrow-back" size={24} color="#fff" />
-                        </TouchableOpacity>
+                       
+                        
+                        <View style={styles.logoContainer}>
+                            <Image
+                                source={require('@/assets/image.png')}
+                                style={styles.logo}
+                                resizeMode="contain"
+                            />
+                        </View>
+
                         <Text style={styles.headerTitle}>
                             {isLoginMode
                                 ? 'Connectez-vous à votre compte'
                                 : 'Créez un nouveau compte'
                             }
                         </Text>
-                    </LinearGradient>
+                    </View>
                     <View style={styles.form}>
                         {
                             !isLoginMode && (
@@ -119,7 +121,7 @@ export default function LoginScreen() {
 
                         </View>
 
-                        <View>
+                        <View style={styles.inputContainer}>
                             <Ionicons name="lock-closed-outline" size={24} color="#6b7280" style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
@@ -140,7 +142,7 @@ export default function LoginScreen() {
                                 <Ionicons
                                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                                     size={24}
-                                    color="#fff" />
+                                    color="#6b7280" />
                             </TouchableOpacity>
                         </View>
                         <TouchableOpacity
@@ -148,8 +150,8 @@ export default function LoginScreen() {
                             style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
                             disabled={isLoading}
                         >
-                            <LinearGradient
-                                colors={['#a855f7', '#ec4899']}
+                            <View
+                             
                                 style={styles.submitButtonGradient}
                             >
                                 {isLoading ? (
@@ -159,7 +161,7 @@ export default function LoginScreen() {
                                         {isLoginMode ? 'Se connecter' : "S'inscrire"}
                                     </Text>
                                 )}
-                            </LinearGradient>
+                            </View>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -209,21 +211,22 @@ const styles = StyleSheet.create({
     header: {
         paddingHorizontal: 24,
         paddingTop: 16,
-        paddingBottom: 48,
+        paddingBottom: 38,
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
+        backgroundColor:'#a5bb80'
     },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        justifyContent: 'center',
+
+    logoContainer: {
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 0,
+    },
+    logo: {
+        width: 420,
+        height: 420,
     },
     headerTitle: {
-        fontSize: 32,
+        fontSize: 20,
         fontWeight: 'bold',
         color: '#fff',
         marginBottom: 8,
@@ -271,6 +274,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor:'#a5bb80'
     },
     submitButtonText: {
         color: '#fff',
@@ -282,7 +286,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
     },
     switchModeText: {
-        color: '#a855f7',
+        color: '#ED7868',
         fontSize: 14,
         fontWeight: '600',
     },

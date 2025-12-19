@@ -4,6 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
+import { FavoritesProvider } from '@/contexts/favoris-context';
+import { UserProvider } from '@/contexts/user-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useOffline } from '@/hooks/use-offline';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -42,10 +44,10 @@ function RootLayoutContent() {
   }, [segments, isLoading, isAuthenticated, router])
 
 
-    useEffect(() => {
+  useEffect(() => {
       if (segments[0] === '(tabs)' && ! isLoading && !isAuthenticated) {
-        refreshAuth();
-      }
+      refreshAuth();
+    }
   }, [segments, isLoading, isAuthenticated, router])
 
   return (
@@ -119,7 +121,11 @@ const styles = StyleSheet.create({
 export default function RootLayout() {
   return (
     <AuthProvider>
-        <RootLayoutContent />
+      <UserProvider>
+        <FavoritesProvider>
+          <RootLayoutContent />
+        </FavoritesProvider>
+      </UserProvider>
     </AuthProvider>
   );
   

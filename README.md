@@ -1,50 +1,169 @@
-# Welcome to your Expo app 👋
+# 🌍 TravelMate
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 👥 Membres du groupe
 
-## Get started
+* **Fatma Khatoui** — ESTIAM Lyon
+* **Ghaya Zaabi** — ESTIAM Paris
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 📱 Présentation du projet
 
-2. Start the app
+**TravelMate** est une application mobile développée avec **React Native (Expo)** permettant aux utilisateurs de gérer, organiser et revivre leurs voyages à travers une expérience riche et intuitive.
 
-   ```bash
-   npx expo start
-   ```
+L'application combine la gestion de voyages, un journal personnel, des fonctionnalités sociales (favoris) et une visualisation cartographique interactive.
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## ⚙️ Installation et lancement du projet
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 🔹 Prérequis
 
-## Get a fresh project
+* Node.js
+* npm
+* Expo CLI
+* Un émulateur Android / iOS ou l’application **Expo Go** sur mobile
 
-When you're ready, run:
+---
+
+### 🔹 Installation du frontend (application mobile)
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Puis lancer l’application avec :
 
-## Learn more
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+➡️ Vous pouvez ensuite :
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+* lancer l’application sur un **émulateur Android / iOS**
+* ou scanner le QR code avec **Expo Go**
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+### 🔹 Installation du backend (obligatoire)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Le backend est fourni dans un projet séparé :
+
+📦 **TravelMateProjectBackend**
+
+1. Cloner ou récupérer le projet backend
+2. Installer les dépendances :
+
+```bash
+npm install
+```
+
+3. Lancer le serveur :
+
+```bash
+npm start
+```
+
+⚠️ Le backend doit impérativement être lancé pour que l’application fonctionne correctement.
+
+---
+
+## ✨ Fonctionnalités principales
+
+### 🧳 Gestion des voyages
+
+* Création et affichage des voyages
+* Accès à un **écran de détail complet** pour chaque voyage
+* Visualisation des informations clés
+
+---
+
+### 📄 Écran détail voyage
+
+* Affichage détaillé d’un voyage sélectionné
+* Galerie de photos associées au voyage
+* Liste des activités planifiées
+* Notes et journal liés au voyage
+
+---
+
+### 🛠️ CRUD des activités
+
+* Création d’activités pour un voyage
+* Modification des activités existantes
+* Suppression d’activités
+
+---
+
+### 📓 Journal de voyage
+
+* Système de **notes personnelles** par voyage
+* Chaque note contient :
+
+  * une date
+  * un contenu textuel riche
+* Permet de conserver souvenirs, impressions et informations importantes
+
+---
+
+### ⭐ Favoris
+
+* Possibilité de **marquer un voyage comme favori**
+* Accès à une **liste dédiée des voyages favoris**
+* Facilite la navigation et la mise en avant des voyages importants
+
+---
+
+### 🔍 Recherche, filtres et tri
+
+* Recherche de voyages par **destination**
+* Filtres disponibles :
+
+  * voyages à venir
+  * voyages passés
+  * voyages favoris
+* Tri des voyages par date :
+
+  * du plus récent au plus ancien
+  * du plus ancien au plus récent
+
+---
+
+### 👤 Profil utilisateur
+
+* Consultation et modification du profil utilisateur
+* Upload d’un **avatar**
+* Statistiques personnelles :
+
+  * nombre total de voyages
+  * nombre de photos
+  * nombre de pays visités
+
+---
+
+### 🗺️ Carte interactive
+
+* Affichage des voyages sur une **carte interactive**
+* Visualisation géographique des destinations
+* Améliore la compréhension globale des voyages effectués
+
+---
+
+### 🌗 Mode sombre
+
+* Support natif du **mode sombre**
+* Le thème s’adapte automatiquement au **mode de l’appareil** (clair / sombre)
+* Possibilité de basculer manuellement entre les modes depuis l’application
+
+---
+
+## 🚀 Technologies utilisées
+
+* **React Native** (Expo)
+* **Expo Router**
+* **Context API**
+* **Node.js / Express** (backend)
+* **JWT** pour l’authentification
+
+
+

@@ -1,134 +1,145 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { LinearGradient } from "expo-linear-gradient";
-import {  useRouter } from "expo-router";
-import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import * as Device from 'expo-device';
+import { useTheme } from "@/contexts/theme-context";
 import { useNotifications } from "@/hooks/use-notifications";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useTheme as useNavTheme } from '@react-navigation/native';
+import * as Device from 'expo-device';
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
-export default function NotificationScreen()    {
+export default function NotificationScreen() {
+  const { theme, toggleTheme } = useTheme();
+  const { colors } = useNavTheme();
+  const router = useRouter();
+  const [testResults, setTestResults] = useState<string[]>([]);
+  const isSimulator = !Device.isDevice;
 
-    const router = useRouter();
-    const [testResults, setTestResults] = useState<string[]>([]);
-    const isSimulator = !Device.isDevice;
-
-    const {
-        pushToken,
-        isLoading,
-        hasPermission,
-        initialize,
-        send,
-        schedule,
-        scheduled,
-        badgeCount,
-        setBadgeCount,
-        clearBadge,
-        refreshScheduled,
-    } = useNotifications(
-        (notification) => {
-            addTestResult(`✅ Notification reçue: ${ notification.request.content.title }`);
-        },
-        (data) => {
-            addTestResult(`👆 Notification cliquée: ${JSON.stringify(data)}`);
-        }
-    );
-
-    const addTestResult = (message : string) => {
-        setTestResults((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  const {
+    pushToken,
+    isLoading,
+    hasPermission,
+    initialize,
+    send,
+    schedule,
+    scheduled,
+    badgeCount,
+    setBadgeCount,
+    clearBadge,
+    refreshScheduled,
+  } = useNotifications(
+    (notification) => {
+      addTestResult(`✅ Notification reçue: ${notification.request.content.title}`);
+    },
+    (data) => {
+      addTestResult(`👆 Notification cliquée: ${JSON.stringify(data)}`);
     }
+  );
 
-    useEffect(() => {
-        refreshScheduled();
-    });
+  const addTestResult = (message: string) => {
+    setTestResults((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  }
 
-    const handleInitialize = async () => {
-        addTestResult('🔄 Initialisation des notifications ...');
-        const token = await initialize();
+  useEffect(() => {
+    refreshScheduled();
+  });
 
-         if (token) {
-            addTestResult(`✅ Token obtenu: ${token.token.substring(0, 20)}...`);
-            addTestResult(`📱 Plateforme: ${token.platform}`);
-            addTestResult(`🆔 Device: ${token.deviceId || 'N/A'}`);
-         } else {
-            addTestResult(`❌ Echec de l\'intialisation`);
-         }
-    };
+  const handleInitialize = async () => {
+    addTestResult('🔄 Initialisation des notifications ...');
+    const token = await initialize();
 
-    const handleSendImmediate = async () => {
-        try {
-            const id = await send(
-                'Test Notification',
-                'Ceci est une notification de test immediate !',
-            );
-            addTestResult(`✅ Notification envoyée (ID: ${id.substring(0, 8)}...`);
-        } catch (error) {
-            addTestResult(`❌ Erreur: ${error}`);
-        }
-    };
+    if (token) {
+      addTestResult(`✅ Token obtenu: ${token.token.substring(0, 20)}...`);
+      addTestResult(`📱 Plateforme: ${token.platform}`);
+      addTestResult(`🆔 Device: ${token.deviceId || 'N/A'}`);
+    } else {
+      addTestResult(`❌ Echec de l\'intialisation`);
+    }
+  };
+
+  const handleSendImmediate = async () => {
+    try {
+      const id = await send(
+        'Test Notification',
+        'Ceci est une notification de test immediate !',
+      );
+      addTestResult(`✅ Notification envoyée (ID: ${id.substring(0, 8)}...`);
+    } catch (error) {
+      addTestResult(`❌ Erreur: ${error}`);
+    }
+  };
 
 
-     const handleSchedule5Seconds = async () => {
-        const date = new Date();
-        date.setSeconds(date.getSeconds() + 5);
+  const handleSchedule5Seconds = async () => {
+    const date = new Date();
+    date.setSeconds(date.getSeconds() + 5);
 
-        try {
+    try {
 
-            const id = await schedule(
-                'Notification Programmée',
-                'Cette notification apparaîtra dans 5 secondes',
-                date,
-                {testType: 'scheduled_5s'}
-            );
-            addTestResult(`✅ Notification Programmée pour ${date.toLocaleTimeString()}`);
-            await refreshScheduled();
-        } catch (error) {
-            addTestResult(`❌ Erreur: ${error}`);
-        }
-    };
+      const id = await schedule(
+        'Notification Programmée',
+        'Cette notification apparaîtra dans 5 secondes',
+        date,
+        { testType: 'scheduled_5s' }
+      );
+      addTestResult(`✅ Notification Programmée pour ${date.toLocaleTimeString()}`);
+      await refreshScheduled();
+    } catch (error) {
+      addTestResult(`❌ Erreur: ${error}`);
+    }
+  };
 
-       const handleSchedule30Seconds = async () => {
-        const date = new Date();
-        date.setSeconds(date.getSeconds() + 30);
+  const handleSchedule30Seconds = async () => {
+    const date = new Date();
+    date.setSeconds(date.getSeconds() + 30);
 
-        try {
+    try {
 
-            const id = await schedule(
-                'Rappel de voyage',
-                'Cette notification apparaîtra dans 30 secondes',
-                date,
-                {testType: 'trip_reminder'}
-            );
-            addTestResult(`✅ Notification Programmée pour ${date.toLocaleTimeString()}`);
-            await refreshScheduled();
-        } catch (error) {
-            addTestResult(`❌ Erreur: ${error}`);
-        }
-    };
+      const id = await schedule(
+        'Rappel de voyage',
+        'Cette notification apparaîtra dans 30 secondes',
+        date,
+        { testType: 'trip_reminder' }
+      );
+      addTestResult(`✅ Notification Programmée pour ${date.toLocaleTimeString()}`);
+      await refreshScheduled();
+    } catch (error) {
+      addTestResult(`❌ Erreur: ${error}`);
+    }
+  };
 
-     const handleSetBadge = async () => {
-       await setBadgeCount(5);
-        addTestResult('✅ Badge défini 5');
-    };
+  const handleSetBadge = async () => {
+    await setBadgeCount(5);
+    addTestResult('✅ Badge défini 5');
+  };
 
-      const handleClearBadge = async () => {
-       await clearBadge();
-        addTestResult('✅ Badge effacé');
-    };
-      const handleClearResults = async () => {
-       await setTestResults([]);
-    };
+  const handleClearBadge = async () => {
+    await clearBadge();
+    addTestResult('✅ Badge effacé');
+  };
+  const handleClearResults = async () => {
+    await setTestResults([]);
+  };
+
+  const styles = getStyles(colors);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <LinearGradient colors={['#a855f7', '#ec4899']} style={styles.header}>
+      <LinearGradient colors={theme === 'dark' ? ['#333', '#555'] : ['#a855f7', '#ec4899']} style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Test Notifications</Text>
-          <View style={styles.placeholder} />
+          <Switch
+            trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
+            thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={toggleTheme}
+            value={theme === 'dark'}
+          />
         </View>
       </LinearGradient>
 
@@ -136,20 +147,20 @@ export default function NotificationScreen()    {
         {/* Status Card */}
         <View style={styles.statusCard}>
           <View style={styles.statusRow}>
-            <Ionicons 
-              name={isSimulator ? "phone-portrait-outline" : "phone-portrait"} 
-              size={20} 
-              color={isSimulator ? "#f59e0b" : "#10b981"} 
+            <Ionicons
+              name={isSimulator ? "phone-portrait-outline" : "phone-portrait"}
+              size={20}
+              color={isSimulator ? "#f59e0b" : "#10b981"}
             />
             <Text style={styles.statusText}>
               {isSimulator ? 'Simulateur' : 'Appareil physique'}
             </Text>
           </View>
           <View style={styles.statusRow}>
-            <Ionicons 
-              name={hasPermission ? "checkmark-circle" : "close-circle"} 
-              size={20} 
-              color={hasPermission ? "#10b981" : "#ef4444"} 
+            <Ionicons
+              name={hasPermission ? "checkmark-circle" : "close-circle"}
+              size={20}
+              color={hasPermission ? "#10b981" : "#ef4444"}
             />
             <Text style={styles.statusText}>
               Permissions: {hasPermission ? 'Accordées' : 'Non accordées'}
@@ -178,9 +189,9 @@ export default function NotificationScreen()    {
         {/* Action Buttons */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Actions</Text>
-          
-          <TouchableOpacity 
-            onPress={handleInitialize} 
+
+          <TouchableOpacity
+            onPress={handleInitialize}
             disabled={isLoading}
             style={[styles.button, styles.buttonPrimary]}
           >
@@ -188,7 +199,7 @@ export default function NotificationScreen()    {
             <Text style={styles.buttonText}>Initialiser les notifications</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleSendImmediate}
             style={[styles.button, styles.buttonSuccess]}
           >
@@ -196,7 +207,7 @@ export default function NotificationScreen()    {
             <Text style={styles.buttonText}>Notification immédiate</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleSchedule5Seconds}
             style={[styles.button, styles.buttonInfo]}
           >
@@ -204,7 +215,7 @@ export default function NotificationScreen()    {
             <Text style={styles.buttonText}>Programmer (5 secondes)</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleSchedule30Seconds}
             style={[styles.button, styles.buttonInfo]}
           >
@@ -213,7 +224,7 @@ export default function NotificationScreen()    {
           </TouchableOpacity>
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handleSetBadge}
               style={[styles.button, styles.buttonSmall, styles.buttonWarning]}
             >
@@ -221,7 +232,7 @@ export default function NotificationScreen()    {
               <Text style={styles.buttonTextSmall}>Badge: 5</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handleClearBadge}
               style={[styles.button, styles.buttonSmall, styles.buttonDanger]}
             >
@@ -241,7 +252,7 @@ export default function NotificationScreen()    {
               </TouchableOpacity>
             )}
           </View>
-          
+
           {testResults.length === 0 ? (
             <View style={styles.emptyResults}>
               <Ionicons name="document-text-outline" size={48} color="#9ca3af" />
@@ -273,212 +284,212 @@ export default function NotificationScreen()    {
       </ScrollView>
     </SafeAreaView>
   );
-    
+
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f9fafb',
-    },
-    header: {
-        paddingHorizontal: 24,
-        paddingTop: 16,
-        paddingBottom: 24,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-    },
-    headerTop: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
-    },
-    placeholder: {
-        width: 40,
-    },
-    content: {
-        flex: 1,
-        padding: 24,
-    },
-    statusCard: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    statusRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 12,
-    },
-    statusText: {
-        fontSize: 14,
-        color: '#111827',
-        fontWeight: '500',
-    },
-    tokenContainer: {
-        marginTop: 12,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
-    },
-    tokenLabel: {
-        fontSize: 12,
-        color: '#6b7280',
-        marginBottom: 4,
-    },
-    tokenText: {
-        fontSize: 11,
-        color: '#111827',
-        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    },
-    badgeContainer: {
-        marginTop: 12,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
-    },
-    badgeLabel: {
-        fontSize: 14,
-        color: '#111827',
-        fontWeight: '500',
-    },
-    scheduledContainer: {
-        marginTop: 8,
-    },
-    scheduledLabel: {
-        fontSize: 14,
-        color: '#6b7280',
-    },
-    section: {
-        marginBottom: 24,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#111827',
-        marginBottom: 16,
-    },
-    button: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        marginBottom: 12,
-        gap: 8,
-    },
-    buttonPrimary: {
-        backgroundColor: '#a855f7',
-    },
-    buttonSuccess: {
-        backgroundColor: '#10b981',
-    },
-    buttonInfo: {
-        backgroundColor: '#3b82f6',
-    },
-    buttonWarning: {
-        backgroundColor: '#f59e0b',
-    },
-    buttonDanger: {
-        backgroundColor: '#ef4444',
-    },
-    buttonSmall: {
-        flex: 1,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    buttonTextSmall: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    resultsContainer: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        maxHeight: 300,
-    },
-    resultItem: {
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f3f4f6',
-    },
-    resultText: {
-        fontSize: 12,
-        color: '#111827',
-        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    },
-    emptyResults: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 32,
-        alignItems: 'center',
-    },
-    emptyText: {
-        fontSize: 16,
-        color: '#6b7280',
-        marginTop: 12,
-        fontWeight: '500',
-    },
-    emptySubtext: {
-        fontSize: 14,
-        color: '#9ca3af',
-        marginTop: 4,
-        textAlign: 'center',
-    },
-    clearButton: {
-        color: '#a855f7',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    infoBox: {
-        flexDirection: 'row',
-        backgroundColor: '#dbeafe',
-        borderRadius: 12,
-        padding: 16,
-        gap: 12,
-        marginBottom: 24,
-    },
-    infoText: {
-        flex: 1,
-        fontSize: 14,
-        color: '#1e40af',
-        lineHeight: 20,
-    },
+const getStyles = (colors: { primary: any; background: any; card: any; text: any; border: any; notification?: string; }) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    padding: 24,
+  },
+  statusCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  statusText: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  tokenContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  tokenLabel: {
+    fontSize: 12,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  tokenText: {
+    fontSize: 11,
+    color: colors.text,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  badgeContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  badgeLabel: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  scheduledContainer: {
+    marginTop: 8,
+  },
+  scheduledLabel: {
+    fontSize: 14,
+    color: colors.text,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+    gap: 8,
+  },
+  buttonPrimary: {
+    backgroundColor: '#a855f7',
+  },
+  buttonSuccess: {
+    backgroundColor: '#10b981',
+  },
+  buttonInfo: {
+    backgroundColor: '#3b82f6',
+  },
+  buttonWarning: {
+    backgroundColor: '#f59e0b',
+  },
+  buttonDanger: {
+    backgroundColor: '#ef4444',
+  },
+  buttonSmall: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonTextSmall: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  resultsContainer: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    maxHeight: 300,
+  },
+  resultItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  resultText: {
+    fontSize: 12,
+    color: colors.text,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  emptyResults: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: colors.text,
+    marginTop: 12,
+    fontWeight: '500',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.text,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  clearButton: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  infoBox: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    marginBottom: 24,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
+  },
 });
