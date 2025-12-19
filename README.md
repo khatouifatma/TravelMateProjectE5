@@ -157,6 +157,13 @@ npm start
 
 ---
 
+### 🎞️ Animations et transitions fluides
+
+  * Transitions fluides entre les écrans
+  * Interface plus dynamique et agréable grâce à des effets de transition subtils
+
+---
+
 ## 🚀 Technologies utilisées
 
 * **React Native** (Expo)
