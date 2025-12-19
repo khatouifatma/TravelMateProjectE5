@@ -5,7 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme as useNavTheme } from '@react-navigation/native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IMAGES_SOURCES } from '.';
 
@@ -158,13 +158,13 @@ export default function TabTwoScreen() {
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={styles.HeaderTitle}>My Trips</Text>
-          <Switch
+          {/* <Switch
             trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
             thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
             ios_backgroundColor="#3e3e3e"
             onValueChange={toggleTheme}
             value={theme === 'dark'}
-          />
+          /> */}
         </View>
 
         {/* Search Bar */}
@@ -377,7 +377,7 @@ export default function TabTwoScreen() {
         )}
         <View style={{ height: 20 }} />
 
-        {/* Modal de tri */}
+    
         <Modal
           animationType="fade"
           transparent={true}

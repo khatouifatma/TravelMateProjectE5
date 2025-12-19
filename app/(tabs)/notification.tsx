@@ -6,7 +6,7 @@ import * as Device from 'expo-device';
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 
@@ -133,13 +133,13 @@ export default function NotificationScreen() {
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Test Notifications</Text>
-          <Switch
+          {/* <Switch
             trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
             thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
             ios_backgroundColor="#3e3e3e"
             onValueChange={toggleTheme}
             value={theme === 'dark'}
-          />
+          /> */}
         </View>
       </LinearGradient>
 

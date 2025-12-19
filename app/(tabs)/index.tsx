@@ -6,7 +6,7 @@ import { useTheme as useNavTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const IMAGES_SOURCES = {
@@ -206,13 +206,13 @@ export default function HomeScreen() {
               <Text style={styles.firstnameText}>{firstName}!</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Switch
+              {/* <Switch
                 trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
                 thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
                 ios_backgroundColor="#3e3e3e"
                 onValueChange={toggleTheme}
                 value={theme === 'dark'}
-              />
+              /> */}
               <TouchableOpacity style={styles.notificationBtn}>
                 <Ionicons name="notifications-outline" size={24} color={colors.text} />
               </TouchableOpacity>
@@ -250,7 +250,7 @@ export default function HomeScreen() {
           </View>
         ) : upcomingTrips.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="airplane-outline" size={48} color="white" />
+            <Ionicons name="airplane-outline" size={48} color="#d1d5db" />
             <Text style={styles.emptyStateText}>No upcoming trips</Text>
             <TouchableOpacity style={styles.addTripButton} onPress={handleAddTrip}>
               <Text style={styles.addTripButtonText}>Add your first trip</Text>

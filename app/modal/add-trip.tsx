@@ -333,7 +333,7 @@ export default function AddTripModal() {
                     <View style={styles.photoUpload}>
                         <View style={styles.photoButtons}>
                             <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
-                                <Ionicons name="camera" size={32} color={colors.primary} />
+                                <Ionicons name="camera" size={32} color="#ED7868" />
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
                                 <Ionicons name="image" size={32} color="#a5bb80" />
@@ -353,14 +353,14 @@ export default function AddTripModal() {
                         placeholder="Ex: Vacances à Paris"
                         value={tripTitle}
                         onChangeText={setTripTitle}
-                        placeholderTextColor={colors.text}
+                        placeholderTextColor="#6b7280"
                     />
                 </View>
 
                 <View style={styles.section}>
                     <Text style={styles.label}>Destination</Text>
                     <View style={styles.inputWithIcon}>
-                        <Ionicons name="location-outline" size={16} color={colors.text} />
+                        <Ionicons name="location-outline" size={16} color="#6b7280" />
                         <TextInput
                             style={styles.inputFlex}
                             placeholder="Tapez une ville (ex: Paris)"
@@ -371,7 +371,7 @@ export default function AddTripModal() {
                                 searchDestination(destination);
                               }
                             }}
-                            placeholderTextColor={colors.text}
+                            placeholderTextColor="#6b7280"
                         />
                         <TouchableOpacity onPress={getLocation}>
                             <Ionicons name="navigate" size={20} color="#a5bb80" />
@@ -415,7 +415,7 @@ export default function AddTripModal() {
                                 style={styles.inputWithIcon}
                                 onPress={() => setShowStartDatePicker(true)}
                             >
-                                <Ionicons name="calendar-outline" size={20} color={colors.text} />
+                                <Ionicons name="calendar-outline" size={20} color="#6b7280" />
                                 <Text style={[styles.dateText, !startDate && styles.placeholderText]}>
                                     {startDate ? formatDate(startDate) : "JJ/MM/AAAA"}
                                 </Text>
@@ -428,7 +428,7 @@ export default function AddTripModal() {
                                 style={styles.inputWithIcon}
                                 onPress={() => setShowEndDatePicker(true)}
                             >
-                                <Ionicons name="calendar-outline" size={20} color={colors.text} />
+                                <Ionicons name="calendar-outline" size={20} color="#6b7280" />
                                 <Text style={[styles.dateText, !endDate && styles.placeholderText]}>
                                     {endDate ? formatDate(endDate) : "JJ/MM/AAAA"}
                                 </Text>
@@ -467,7 +467,7 @@ export default function AddTripModal() {
                         multiline
                         numberOfLines={4}
                         textAlignVertical="top"
-                        placeholderTextColor={colors.text}
+                        placeholderTextColor="#6b7280"
                     />
                 </View>
 
@@ -475,7 +475,7 @@ export default function AddTripModal() {
                     <View style={styles.progressCard}>
                         <View style={styles.progressHeader}>
                             <View style={styles.progressInfo}>
-                                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
+                                <Ionicons name="cloud-upload-outline" size={24} color="#ED7868" />
                                 <Text style={styles.progressText}>Téléchargement en cours...</Text>
                             </View>
                             <Text style={styles.progressPercent}>{uploadProgress}%</Text>
@@ -531,7 +531,7 @@ const getStyles = (colors: { primary: any; background: any; card: any; text: any
         alignItems: 'center',
         borderWidth: 2,
         borderStyle: 'dashed',
-        borderColor: colors.border,
+        borderColor: "#381a15ff",
         paddingVertical: 20,
     },
     photoButtons: {
@@ -554,7 +554,7 @@ const getStyles = (colors: { primary: any; background: any; card: any; text: any
     },
     photoText: {
         fontSize: 14,
-        color: colors.text,
+        color: "#6b7280",
         textAlign: 'center',
     },
     photoCount: {
@@ -595,7 +595,7 @@ const getStyles = (colors: { primary: any; background: any; card: any; text: any
         color: colors.text,
     },
     placeholderText: {
-        color: colors.text,
+        color: "#6b7280",
     },
     hint: {
         fontSize: 12,

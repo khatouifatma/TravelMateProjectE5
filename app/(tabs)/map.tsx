@@ -178,13 +178,13 @@ export default function MapScreen() {
       <View style={styles.headerContent}>
         <Text style={styles.headerTitle}>Travel Map</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          <Switch
+          {/* <Switch
             trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
             thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
             ios_backgroundColor="#3e3e3e"
             onValueChange={toggleTheme}
             value={theme === 'dark'}
-          />
+          /> */}
           <TouchableOpacity style={styles.zoomButton} onPress={zoomToAllMarkers}>
             <Ionicons name="locate" size={24} color="white" />
           </TouchableOpacity>
