@@ -1,3 +1,4 @@
+import { Colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 import { FavoritesProvider } from '@/contexts/favoris-context';
 import { ThemeProvider as AppThemeProvider, useTheme } from '@/contexts/theme-context';
@@ -10,7 +11,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import 'react-native-reanimated';
-import { Colors } from '@/constants/theme';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -77,37 +77,37 @@ function RootLayoutContent() {
   // }, [segments, isLoading, isAuthenticated, router])
 
   useEffect(() => {
-  if (isLoading) {
-    return;
-  }
+    if (isLoading) {
+      return;
+    }
 
-  // 🔧 DEV MODE — bypass auth
-  if (DEV_AUTH_BYPASS) {
-    console.log('🔧 [DEV MODE] Auth bypassed - accessing app directly');
-    return;
-  }
+    // 🔧 DEV MODE — bypass auth
+    if (DEV_AUTH_BYPASS) {
+      console.log('🔧 [DEV MODE] Auth bypassed - accessing app directly');
+      return;
+    }
 
-  const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'modal';
-  const isLoginpage = segments[0] === 'login';
+    const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'modal';
+    const isLoginpage = segments[0] === 'login';
 
-  if (!isAuthenticated && inAuthGroup) {
-    router.replace('/login');
-  } else if (isAuthenticated && isLoginpage) {
-    router.replace('/(tabs)');
-  } else {
-    console.log('✅ [ROUTER] Route access granted');
-  }
-}, [segments, isLoading, isAuthenticated, router]);
+    if (!isAuthenticated && inAuthGroup) {
+      router.replace('/login');
+    } else if (isAuthenticated && isLoginpage) {
+      router.replace('/(tabs)');
+    } else {
+      console.log('✅ [ROUTER] Route access granted');
+    }
+  }, [segments, isLoading, isAuthenticated, router]);
 
-useEffect(() => {
-  if (DEV_AUTH_BYPASS) {
-    return;
-  }
+  useEffect(() => {
+    if (DEV_AUTH_BYPASS) {
+      return;
+    }
 
-  if (segments[0] === '(tabs)' && !isLoading && !isAuthenticated) {
-    refreshAuth();
-  }
-}, [segments, isLoading, isAuthenticated, router]);
+    if (segments[0] === '(tabs)' && !isLoading && !isAuthenticated) {
+      refreshAuth();
+    }
+  }, [segments, isLoading, isAuthenticated, router]);
 
 
   return (
@@ -142,7 +142,72 @@ useEffect(() => {
       <Stack>
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        {/* <Stack.Screen name="modal/add-trip" options={{ presentation: 'modal', title: 'Add Trip', headerBackTitle: '' }} />  */}
+        <Stack.Screen
+          name="modal/add-trip"
+          options={({ navigation }) => ({
+            presentation: 'modal',
+            title: 'Add Trip',
+            headerLeft: () => (
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                style={{ marginLeft: 16 }}
+                onPress={() => navigation.goBack()}
+              />
+            ),
+          })}
+        />
+        {/* <Stack.Screen name="modal/edit-profile" options={{ presentation: 'modal', title: 'Edit Profile', headerBackTitle: '' }} />
+        <Stack.Screen name="modal/editTrip" options={{ presentation: 'modal', title: 'Edit Trip', headerBackTitle: '' }} />
+        <Stack.Screen name="modal/tripDetails" options={{ presentation: 'modal', title: 'Trip Details', headerBackTitle: '' }} /> */}
+        <Stack.Screen
+          name="modal/edit-profile"
+          options={({ navigation }) => ({
+            presentation: 'modal',
+            title: 'Edit Profile',
+            headerLeft: () => (
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                style={{ marginLeft: 16 }}
+                onPress={() => navigation.goBack()}
+              />
+            ),
+          })}
+        />
+
+        <Stack.Screen
+          name="modal/editTrip"
+          options={({ navigation }) => ({
+            presentation: 'modal',
+            title: 'Edit Trip',
+            headerLeft: () => (
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                style={{ marginLeft: 16 }}
+                onPress={() => navigation.goBack()}
+              />
+            ),
+          })}
+        />
+        <Stack.Screen
+          name="modal/tripDetails"
+          options={({ navigation }) => ({
+            presentation: 'modal',
+            title: 'Trip Details',
+            headerLeft: () => (
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                style={{ marginLeft: 16 }}
+                onPress={() => navigation.goBack()}
+              />
+            ),
+          })}
+        />
       </Stack>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
@@ -190,5 +255,5 @@ export default function RootLayout() {
       </UserProvider>
     </AuthProvider>
   );
-  
+
 }
