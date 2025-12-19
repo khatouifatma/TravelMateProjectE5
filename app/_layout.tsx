@@ -1,20 +1,22 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 import { FavoritesProvider } from '@/contexts/favoris-context';
+import { ThemeProvider as AppThemeProvider } from '@/contexts/theme-context';
 import { UserProvider } from '@/contexts/user-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useOffline } from '@/hooks/use-offline';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import 'react-native-reanimated';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+const DEV_AUTH_BYPASS = __DEV__;
 
 function RootLayoutContent() {
   const colorScheme = useColorScheme();
@@ -25,30 +27,64 @@ function RootLayoutContent() {
 
 
   // check auth
+  // useEffect(() => {
+  //   if (isLoading) {
+  //     return;
+  //   }
+  //   const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'modal';
+  //   const isLoginpage = segments[0] === 'login';
+  //   if (!isAuthenticated && inAuthGroup) {
+  //     return router.replace('/login');
+  //   } else if (isAuthenticated && isLoginpage) {
+  //     return router.replace('/(tabs)');
+
+  //   } else {
+  //     console.log('✅ [ROUTER] Route access granted');
+
+  //   }
+
+  // }, [segments, isLoading, isAuthenticated, router])
+
+
+  // useEffect(() => {
+  //     if (segments[0] === '(tabs)' && ! isLoading && !isAuthenticated) {
+  //     refreshAuth();
+  //   }
+  // }, [segments, isLoading, isAuthenticated, router])
+
   useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-    const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'modal';
-    const isLoginpage = segments[0] === 'login';
-    if (!isAuthenticated && inAuthGroup) {
-      return router.replace('/login');
-    } else if (isAuthenticated && isLoginpage) {
-      return router.replace('/(tabs)');
+  if (isLoading) {
+    return;
+  }
 
-    } else {
-      console.log('✅ [ROUTER] Route access granted');
+  // 🔧 DEV MODE — bypass auth
+  if (DEV_AUTH_BYPASS) {
+    console.log('🔧 [DEV MODE] Auth bypassed - accessing app directly');
+    return;
+  }
 
-    }
+  const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'modal';
+  const isLoginpage = segments[0] === 'login';
 
-  }, [segments, isLoading, isAuthenticated, router])
+  if (!isAuthenticated && inAuthGroup) {
+    router.replace('/login');
+  } else if (isAuthenticated && isLoginpage) {
+    router.replace('/(tabs)');
+  } else {
+    console.log('✅ [ROUTER] Route access granted');
+  }
+}, [segments, isLoading, isAuthenticated, router]);
 
+useEffect(() => {
+  if (DEV_AUTH_BYPASS) {
+    return;
+  }
 
-  useEffect(() => {
-      if (segments[0] === '(tabs)' && ! isLoading && !isAuthenticated) {
-      refreshAuth();
-    }
-  }, [segments, isLoading, isAuthenticated, router])
+  if (segments[0] === '(tabs)' && !isLoading && !isAuthenticated) {
+    refreshAuth();
+  }
+}, [segments, isLoading, isAuthenticated, router]);
+
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -123,7 +159,9 @@ export default function RootLayout() {
     <AuthProvider>
       <UserProvider>
         <FavoritesProvider>
-          <RootLayoutContent />
+          <AppThemeProvider>
+            <RootLayoutContent />
+          </AppThemeProvider>
         </FavoritesProvider>
       </UserProvider>
     </AuthProvider>
