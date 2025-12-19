@@ -1,9 +1,11 @@
+import { useTheme } from '@/contexts/theme-context';
 import { API } from '@/services/api';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme as useNavTheme } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Image, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IMAGES_SOURCES } from '.';
@@ -32,6 +34,8 @@ interface TripLocation extends Trip {
 
 export default function MapScreen() {
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+  const { colors } = useNavTheme();
   const mapRef = useRef<MapView>(null);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'upcoming' | 'past'>('all');
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
@@ -42,13 +46,13 @@ export default function MapScreen() {
     try {
       setIsLoading(true);
       const data = await API.getTrips();
-      
+
       const tripsWithLocation: TripLocation[] = data
         .filter((trip: Trip) => trip.location && trip.location.lat !== 0 && trip.location.lng !== 0)
         .map((trip: Trip) => {
           const endDate = trip.endDate ? new Date(trip.endDate) : new Date();
           const status = endDate >= new Date() ? 'upcoming' : 'past';
-          
+
           return {
             ...trip,
             latitude: trip.location!.lat,
@@ -56,7 +60,7 @@ export default function MapScreen() {
             status
           };
         });
-      
+
       console.log('📍 Trips with location:', tripsWithLocation.length);
       setTrips(tripsWithLocation);
     } catch (error) {
@@ -115,10 +119,12 @@ export default function MapScreen() {
     }
   }, [selectedFilter]);
 
+  const styles = getStyles(colors);
+
   const CustomMarker = ({ trip }: { trip: TripLocation }) => {
     const isSelected = selectedTripId === trip.id;
     const markerSize = isSelected ? 90 : 70;
-    const borderColor = trip.status === 'upcoming' ? '#ED7868' : '#6b7280';
+    const borderColor = trip.status === 'upcoming' ? colors.primary : '#6b7280';
 
     return (
       <View style={styles.markerContainer}>
@@ -135,7 +141,7 @@ export default function MapScreen() {
         >
           <Image
             source={
-              trip.image.startsWith('http') 
+              trip.image.startsWith('http')
                 ? { uri: trip.image }
                 : IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || IMAGES_SOURCES.paris
             }
@@ -153,7 +159,7 @@ export default function MapScreen() {
           <View
             style={[
               styles.statusIndicator,
-              { backgroundColor: trip.status === 'upcoming' ? '#ED7868' : '#6b7280' },
+              { backgroundColor: trip.status === 'upcoming' ? colors.primary : '#6b7280' },
             ]}
           >
             <Text style={styles.statusEmoji}>
@@ -171,9 +177,18 @@ export default function MapScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.headerContent}>
         <Text style={styles.headerTitle}>Travel Map</Text>
-        <TouchableOpacity style={styles.zoomButton} onPress={zoomToAllMarkers}>
-          <Ionicons name="locate" size={24} color="white" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <Switch
+            trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
+            thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={toggleTheme}
+            value={theme === 'dark'}
+          />
+          <TouchableOpacity style={styles.zoomButton} onPress={zoomToAllMarkers}>
+            <Ionicons name="locate" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.filterContainer}>
@@ -205,7 +220,7 @@ export default function MapScreen() {
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ED7868" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading map...</Text>
         </View>
       ) : filteredTrips.length === 0 ? (
@@ -229,6 +244,7 @@ export default function MapScreen() {
           }}
           showsUserLocation={false}
           showsMyLocationButton={false}
+          customMapStyle={theme === 'dark' ? mapStyle : []}
         >
           {filteredTrips.map((trip) => (
             <Marker
@@ -248,7 +264,7 @@ export default function MapScreen() {
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#ED7868' }]} />
+          <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
           <Text style={styles.legendText}>Upcoming</Text>
         </View>
         <View style={styles.legendItem}>
@@ -268,23 +284,23 @@ export default function MapScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: { primary: any; background: any; card: any; text: any; border?: string; notification?: string; }) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background,
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#a5bb80',
+    backgroundColor: colors.card,
     paddingHorizontal: 24,
     paddingVertical: 16,
   },
   headerTitle: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: 'white',
+    color: colors.text,
   },
   zoomButton: {
     width: 40,
@@ -296,7 +312,7 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: 'row',
-    backgroundColor: '#a5bb80',
+    backgroundColor: colors.card,
     gap: 8,
     paddingHorizontal: 24,
     paddingBottom: 16,
@@ -305,18 +321,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: colors.background,
   },
   filterButtonActive: {
-    backgroundColor: 'white',
+    backgroundColor: colors.primary,
   },
   filterText: {
     fontSize: 14,
-    color: 'white',
+    color: colors.text,
     fontWeight: '600',
   },
   filterTextActive: {
-    color: '#ED7868',
+    color: 'white',
   },
   loadingContainer: {
     flex: 1,
@@ -326,7 +342,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.text,
   },
   emptyState: {
     flex: 1,
@@ -337,13 +353,13 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#6b7280',
+    color: colors.text,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.text,
     textAlign: 'center',
   },
   map: {
@@ -418,7 +434,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 200,
     right: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.card,
     padding: 12,
     borderRadius: 12,
     shadowColor: '#000',
@@ -440,7 +456,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.text,
     fontWeight: '600',
   },
   selectionInfo: {
@@ -448,7 +464,7 @@ const styles = StyleSheet.create({
     bottom: 30,
     left: 20,
     right: 20,
-    backgroundColor: 'rgba(237, 120, 104, 0.95)',
+    backgroundColor: colors.primary,
     padding: 12,
     borderRadius: 12,
     shadowColor: '#000',
@@ -464,3 +480,165 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+const mapStyle = [
+  {
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#242f3e"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#746855"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#242f3e"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.locality",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#d59563"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#d59563"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#263c3f"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#6b9a76"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#38414e"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#212a37"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#9ca5b3"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#746855"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#1f2835"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#f3d19c"
+      }
+    ]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#2f3948"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#d59563"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#17263c"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#515c6d"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#17263c"
+      }
+    ]
+  }
+];

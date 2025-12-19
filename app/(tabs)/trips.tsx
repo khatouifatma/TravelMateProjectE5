@@ -1,9 +1,11 @@
 import { useFavorites } from '@/contexts/favoris-context';
+import { useTheme } from '@/contexts/theme-context';
 import { API } from '@/services/api';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme as useNavTheme } from '@react-navigation/native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IMAGES_SOURCES } from '.';
 
@@ -20,6 +22,8 @@ interface Trip {
 
 export default function TabTwoScreen() {
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+  const { colors } = useNavTheme();
   const [selectedTab, setSelectedTab] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'date-desc' | 'date-asc'>('date-desc');
@@ -27,7 +31,7 @@ export default function TabTwoScreen() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  
+
   const { favorites, toggleFavorite } = useFavorites();
 
   const loadTrips = async () => {
@@ -93,7 +97,7 @@ export default function TabTwoScreen() {
       );
       return;
     }
-    
+
     router.push({
       pathname: '/modal/editTrip',
       params: { id: trip.id }
@@ -104,9 +108,9 @@ export default function TabTwoScreen() {
     const now = new Date();
     const filtered = trips.filter(trip => {
       let tabMatch = false;
-      
+
       const endDate = trip.endDate ? new Date(trip.endDate) : null;
-      
+
       switch (selectedTab) {
         case 'Upcoming':
           tabMatch = endDate ? endDate >= now : false;
@@ -128,7 +132,7 @@ export default function TabTwoScreen() {
       if (searchQuery) {
         const lowerCaseQuery = searchQuery.toLowerCase();
         return trip.destination.toLowerCase().includes(lowerCaseQuery) ||
-               trip.title.toLowerCase().includes(lowerCaseQuery);
+          trip.title.toLowerCase().includes(lowerCaseQuery);
       }
 
       return true;
@@ -146,11 +150,22 @@ export default function TabTwoScreen() {
 
   }, [selectedTab, searchQuery, favorites, sortOrder, trips]);
 
+  const styles = getStyles(colors);
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.HeaderTitle}>My Trips</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.HeaderTitle}>My Trips</Text>
+          <Switch
+            trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
+            thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={toggleTheme}
+            value={theme === 'dark'}
+          />
+        </View>
 
         {/* Search Bar */}
         <View style={styles.searchBarContainer}>
@@ -160,7 +175,9 @@ export default function TabTwoScreen() {
               style={styles.searchInput}
               placeholder="Rechercher un voyage..."
               value={searchQuery}
-              onChangeText={setSearchQuery} />
+              onChangeText={setSearchQuery}
+              placeholderTextColor={colors.text}
+            />
           </View>
           <TouchableOpacity style={styles.filterButton} onPress={() => setSortModalVisible(true)}>
             <Ionicons name="options-outline" size={24} color="white" />
@@ -205,16 +222,16 @@ export default function TabTwoScreen() {
           <View style={styles.tripsList}>
             {filteredTrips.length === 0 ? (
               <View style={styles.emptyState}>
-                <Ionicons 
-                  name={selectedTab === 'Favorites' ? "heart-outline" : "airplane-outline"} 
-                  size={64} 
-                  color="#d1d5db" 
+                <Ionicons
+                  name={selectedTab === 'Favorites' ? "heart-outline" : "airplane-outline"}
+                  size={64}
+                  color="#d1d5db"
                 />
                 <Text style={styles.emptyStateText}>
                   {selectedTab === 'Favorites' ? 'No favorite trips' : 'No trips found'}
                 </Text>
                 <Text style={styles.emptyStateSubtext}>
-                  {selectedTab === 'Favorites' 
+                  {selectedTab === 'Favorites'
                     ? 'Mark your favorite trips by pressing the heart icon'
                     : 'Start adding your travel adventures!'}
                 </Text>
@@ -235,52 +252,52 @@ export default function TabTwoScreen() {
                       }
                     }}>
                     {/* Image */}
-                    <View style={styles.tripImageContainer}> 
-                      <Image 
+                    <View style={styles.tripImageContainer}>
+                      <Image
                         source={
-                          trip.image.startsWith('http') 
+                          trip.image.startsWith('http')
                             ? { uri: trip.image }
                             : IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || IMAGES_SOURCES.paris
                         }
                         style={styles.tripImage}
                         resizeMode="cover"
                       />
-                      <View style={styles.tripImageOverlay} /> 
-                      
+                      <View style={styles.tripImageOverlay} />
+
                       <View style={styles.topButtonsContainer}>
                         {/* Favorite Button */}
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.favoriteButton}
                           onPress={(e) => {
                             e.stopPropagation();
                             toggleFavorite(trip.id);
                           }}
                         >
-                          <Ionicons 
-                            name={favorites.has(trip.id) ? "heart" : "heart-outline"} 
-                            size={24} 
-                            color={favorites.has(trip.id) ? "#ED7868" : "white"} 
+                          <Ionicons
+                            name={favorites.has(trip.id) ? "heart" : "heart-outline"}
+                            size={24}
+                            color={favorites.has(trip.id) ? "#ED7868" : "white"}
                           />
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.menuButton}
                           onPress={(e) => {
                             e.stopPropagation();
                             setActiveMenuId(activeMenuId === trip.id ? null : trip.id);
                           }}
                         >
-                          <Ionicons 
-                            name="ellipsis-vertical" 
-                            size={24} 
-                            color="white" 
+                          <Ionicons
+                            name="ellipsis-vertical"
+                            size={24}
+                            color="white"
                           />
                         </TouchableOpacity>
                       </View>
 
                       {activeMenuId === trip.id && (
                         <View style={styles.dropdownMenu}>
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={[
                               styles.dropdownItem,
                               !canModifyTrip(trip) && styles.dropdownItemDisabled
@@ -288,10 +305,10 @@ export default function TabTwoScreen() {
                             onPress={() => handleEditTrip(trip)}
                             disabled={!canModifyTrip(trip)}
                           >
-                            <Ionicons 
-                              name="create-outline" 
-                              size={20} 
-                              color={canModifyTrip(trip) ? "#3b82f6" : "#9ca3af"} 
+                            <Ionicons
+                              name="create-outline"
+                              size={20}
+                              color={canModifyTrip(trip) ? "#3b82f6" : "#9ca3af"}
                             />
                             <Text style={[
                               styles.dropdownItemText,
@@ -303,14 +320,14 @@ export default function TabTwoScreen() {
 
                           <View style={styles.dropdownDivider} />
 
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={styles.dropdownItem}
                             onPress={() => handleDeleteTrip(trip)}
                           >
-                            <Ionicons 
-                              name="trash-outline" 
-                              size={20} 
-                              color="#ef4444" 
+                            <Ionicons
+                              name="trash-outline"
+                              size={20}
+                              color="#ef4444"
                             />
                             <Text style={[styles.dropdownItemText, styles.dropdownItemTextDanger]}>
                               Supprimer
@@ -335,9 +352,9 @@ export default function TabTwoScreen() {
                         <Text style={styles.tripDateText}>
                           {trip.startDate && trip.endDate ? (
                             <>
-                              {new Date(trip.startDate).toLocaleDateString('en-US', {day: 'numeric', month: 'short'})} -
+                              {new Date(trip.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} -
                               {' '}
-                              {new Date(trip.endDate).toLocaleDateString('en-US', {day: 'numeric', month: 'short'})}
+                              {new Date(trip.endDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                             </>
                           ) : (
                             'Date non définie'
@@ -345,8 +362,8 @@ export default function TabTwoScreen() {
                         </Text>
                       </View>
                       <View style={styles.tripPhotos}>
-                        <View style={styles.photoCircle}/>
-                        <View style={[styles.photoCircle, styles.photoCircle2]}/>
+                        <View style={styles.photoCircle} />
+                        <View style={[styles.photoCircle, styles.photoCircle2]} />
                         <View style={[styles.photoCircle, styles.photoCircle3]}>
                           <Text style={styles.tripPhotoCount}>{trip.photos?.length || 0}</Text>
                         </View>
@@ -358,7 +375,7 @@ export default function TabTwoScreen() {
             )}
           </View>
         )}
-        <View style={{height: 20}}/>
+        <View style={{ height: 20 }} />
 
         {/* Modal de tri */}
         <Modal
@@ -370,25 +387,25 @@ export default function TabTwoScreen() {
           <Pressable style={styles.modalOverlay} onPress={() => setSortModalVisible(false)}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Sort by</Text>
-              <TouchableOpacity 
-                style={styles.modalOption} 
+              <TouchableOpacity
+                style={styles.modalOption}
                 onPress={() => { setSortOrder('date-desc'); setSortModalVisible(false); }}
               >
-                <Ionicons 
-                  name={sortOrder === 'date-desc' ? 'radio-button-on' : 'radio-button-off'} 
-                  size={20} 
-                  color="#ED7868" 
+                <Ionicons
+                  name={sortOrder === 'date-desc' ? 'radio-button-on' : 'radio-button-off'}
+                  size={20}
+                  color="#ED7868"
                 />
                 <Text style={styles.modalOptionText}>Date (most recent)</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.modalOption} 
+              <TouchableOpacity
+                style={styles.modalOption}
                 onPress={() => { setSortOrder('date-asc'); setSortModalVisible(false); }}
               >
-                <Ionicons 
-                  name={sortOrder === 'date-asc' ? 'radio-button-on' : 'radio-button-off'} 
-                  size={20} 
-                  color="#ED7868" 
+                <Ionicons
+                  name={sortOrder === 'date-asc' ? 'radio-button-on' : 'radio-button-off'}
+                  size={20}
+                  color="#ED7868"
                 />
                 <Text style={styles.modalOptionText}>Date (oldest)</Text>
               </TouchableOpacity>
@@ -400,83 +417,83 @@ export default function TabTwoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container : {
-    flex : 1,
-    backgroundColor : '#f9fafb',
+const getStyles = (colors: { primary: any; background: any; card: any; text: any; border?: string; notification?: string; }) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  header : {
-    backgroundColor : '#fff',
-    paddingHorizontal : 24,
-    paddingTop : 16,
-    paddingBottom : 16
+  header: {
+    backgroundColor: colors.card,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 16
   },
-  HeaderTitle : {
-    fontSize : 32,
-    fontWeight : 'bold',
-    color : '#111827',
-    marginBottom : 16
+  HeaderTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16
   },
-  searchBarContainer : {
-    flexDirection : 'row',
-    gap : 12,
+  searchBarContainer: {
+    flexDirection: 'row',
+    gap: 12,
   },
-  searchBar : {
-    flex : 1,
-    flexDirection : 'row',
-    alignItems : 'center',
-    backgroundColor : '#f3f4f6',
-    paddingHorizontal : 16,
-    paddingVertical : 12,
-    borderRadius : 16,
-    gap : 12,
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    gap: 12,
   },
   searchInput: {
-    flex : 1,
-    fontSize : 16,
-    color : '#111827',
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
   },
-  filterButton : {
-    width : 48,
-    height : 48,
-    backgroundColor : '#ED7868',
-    borderRadius : 16,
-    justifyContent : 'center',
-    alignItems : 'center',
+  filterButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  content : {
-    flex : 1,
+  content: {
+    flex: 1,
   },
-  tabContainer : {
-    paddingHorizontal : 24,
-    paddingVertical : 16,
+  tabContainer: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
-  tabsContent : {
-    gap : 8,
+  tabsContent: {
+    gap: 8,
   },
-  tab : {
-    paddingHorizontal : 16,
-    paddingVertical : 8,
-    borderRadius : 20,
-    backgroundColor : 'white',
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.card,
   },
-  tabActive : {
-    backgroundColor : '#ED7868',
+  tabActive: {
+    backgroundColor: colors.primary,
   },
-  tabText : {
+  tabText: {
     fontSize: 14,
-    color : '#6b7280',
-    fontWeight : '600',
+    color: colors.text,
+    fontWeight: '600',
   },
-  tabTextActive : {
-    color : 'white',
+  tabTextActive: {
+    color: 'white',
   },
-  tripsList : {
-    paddingHorizontal : 24,
-    gap : 16,
+  tripsList: {
+    paddingHorizontal: 24,
+    gap: 16,
   },
-  tripCard : {
-    backgroundColor: '#fff',
+  tripCard: {
+    backgroundColor: colors.card,
     borderRadius: 24,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -486,21 +503,21 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginBottom: 16,
   },
-  tripImageContainer : {
-    position : 'relative',
-    height : 192,
+  tripImageContainer: {
+    position: 'relative',
+    height: 192,
   },
-  tripImage : {
+  tripImage: {
     width: '100%',
     height: '100%',
   },
-  tripImageOverlay : {
-    position : 'absolute',
-    top : 0,
-    left : 0,
-    right : 0,
-    bottom : 0,
-    backgroundColor : 'rgba(0,0,0,0.3)',
+  tripImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   topButtonsContainer: {
     position: 'absolute',
@@ -567,67 +584,67 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
 
-  tripImageContent : {
-    position : 'absolute',
-    bottom : 16,
-    left : 16,
-    right : 16,
+  tripImageContent: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
   },
-  tripCardTitle : {
-    fontSize : 24,
-    fontWeight : 'bold',
-    color : 'white',
-    marginBottom : 4,
+  tripCardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 4,
   },
-  tripLocation : {
-    flexDirection : 'row',
-    alignItems : 'center',
-    gap : 4,
+  tripLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  tripLocationText : {
-    color : 'rgba(255,255,255,0.9)',
-    fontSize : 14,
+  tripLocationText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
   },
-  tripCardInfo : {
-    padding : 16,
-    flexDirection : 'row',
-    justifyContent : 'space-between',
-    alignItems : 'center',
+  tripCardInfo: {
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  tripDate : {
-    flexDirection : 'row',
-    alignItems : 'center',
-    gap : 8,
+  tripDate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  tripDateText : {
-    color : '#6b7280',
-    fontSize : 14,
+  tripDateText: {
+    color: '#6b7280',
+    fontSize: 14,
   },
-  tripPhotos : {
-    flexDirection : 'row',
-    alignItems : 'center'
+  tripPhotos: {
+    flexDirection: 'row',
+    alignItems: 'center'
   },
-  photoCircle : {
-    width : 32,
-    height : 32,
-    borderRadius : 16,
-    backgroundColor : '#d1d5db',
-    borderWidth : 2,
-    borderColor : 'white',
-    marginLeft : -8,
+  photoCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#d1d5db',
+    borderWidth: 2,
+    borderColor: 'white',
+    marginLeft: -8,
   },
-  photoCircle2 : {
-    backgroundColor : '#d1d5db',
+  photoCircle2: {
+    backgroundColor: '#d1d5db',
   },
-  photoCircle3 : {
-    backgroundColor : '#9ca3af',
-    alignItems : 'center',
-    justifyContent : 'center',
+  photoCircle3: {
+    backgroundColor: '#9ca3af',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  tripPhotoCount : {
-    fontSize : 10,
-    color : 'white',
-    fontWeight : '600',
+  tripPhotoCount: {
+    fontSize: 10,
+    color: 'white',
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,

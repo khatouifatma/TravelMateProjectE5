@@ -1,10 +1,12 @@
 import { useAuth } from '@/contexts/auth-context';
+import { useTheme } from '@/contexts/theme-context';
 import { API } from '@/services/api';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme as useNavTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const IMAGES_SOURCES = {
@@ -38,6 +40,8 @@ interface Trip {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { colors } = useNavTheme();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -64,7 +68,7 @@ export default function HomeScreen() {
   const stats = useMemo(() => {
     const totalTrips = trips.length;
     const totalPhotos = trips.reduce((acc, trip) => acc + (trip.photos?.length || 0), 0);
-    
+
     const countries = new Set(
       trips
         .map(t => {
@@ -73,7 +77,7 @@ export default function HomeScreen() {
         })
         .filter(country => country && country.length > 0)
     );
-    
+
     return [
       { label: 'Trips', value: totalTrips, icon: 'airplane-outline' as const },
       { label: 'Photos', value: totalPhotos, icon: 'camera-outline' as const },
@@ -97,16 +101,16 @@ export default function HomeScreen() {
       const today = new Date();
       const startDate = trip.startDate ? new Date(trip.startDate) : new Date();
       const daysLeft = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       const formatDateRange = (start: string, end: string) => {
         if (!start || !end) return 'Date non définie';
         const startDate = new Date(start);
         const endDate = new Date(end);
-        
+
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
           return 'Date invalide';
         }
-        
+
         const startDay = startDate.getDate();
         const endDay = endDate.getDate();
         const month = startDate.toLocaleDateString('en-US', { month: 'short' });
@@ -124,7 +128,7 @@ export default function HomeScreen() {
 
   const recentActivities = useMemo(() => {
     const allActivities: Activity[] = [];
-    
+
     trips.forEach(trip => {
       if (trip.activities && trip.activities.length > 0) {
         trip.activities.forEach(activity => {
@@ -139,7 +143,7 @@ export default function HomeScreen() {
 
     return allActivities
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 3); 
+      .slice(0, 3);
   }, [trips]);
 
   const getActivityIcon = (type: Activity['type']) => {
@@ -182,12 +186,14 @@ export default function HomeScreen() {
   };
 
   const handleAddTrip = () => {
-    router.push('/modal/add-trip'); 
+    router.push('/modal/add-trip');
   };
 
   const handleAddPhoto = () => {
     console.log('Add photo');
   };
+
+  const styles = getStyles(colors);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -199,9 +205,18 @@ export default function HomeScreen() {
               <Text style={styles.greetingText}>Hello</Text>
               <Text style={styles.firstnameText}>{firstName}!</Text>
             </View>
-            <TouchableOpacity style={styles.notificationBtn}>
-              <Ionicons name="notifications-outline" size={24} color="#6b7280" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Switch
+                trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
+                thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={toggleTheme}
+                value={theme === 'dark'}
+              />
+              <TouchableOpacity style={styles.notificationBtn}>
+                <Ionicons name="notifications-outline" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Stats */}
@@ -251,7 +266,7 @@ export default function HomeScreen() {
             >
               <Image
                 source={
-                  trip.image.startsWith('http') 
+                  trip.image.startsWith('http')
                     ? { uri: trip.image }
                     : IMAGES_SOURCES[trip.image as keyof typeof IMAGES_SOURCES] || IMAGES_SOURCES.paris
                 }
@@ -275,7 +290,7 @@ export default function HomeScreen() {
         )}
 
         <View style={styles.mapBannerContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.mapBanner}
             onPress={handleMapPress}
             activeOpacity={0.9}
@@ -288,7 +303,7 @@ export default function HomeScreen() {
                 <View style={styles.mapBannerTextContainer}>
                   <Text style={styles.mapBannerTitle}>Explore Travel Map</Text>
                   <Text style={styles.mapBannerSubtitle}>
-                    See all your trips on an interactive map 
+                    See all your trips on an interactive map
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="white" />
@@ -367,16 +382,15 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: { primary: any; background: any; card: any; text: any; border: any; notification?: string; }) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb'
+    backgroundColor: colors.background
   },
   header: {
     paddingHorizontal: 24,
     paddingTop: 8,
     paddingBottom: 24,
-    backgroundColor: '#a5bb80',
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     shadowColor: '#000',
@@ -384,19 +398,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 3,
+    backgroundColor: '#a5bb80'
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24
+    marginBottom: 24,
+
   },
   greetingText: {
-    color: '#6b7280',
+    color: colors.text,
     fontSize: 24,
   },
   firstnameText: {
-    color: '#111827',
+    color: colors.text,
     fontSize: 28,
     fontWeight: 'bold'
   },
@@ -404,31 +420,32 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center'
   },
   statsContainer: {
     flexDirection: 'row',
     gap: 12,
+
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#fef8f7',
+    backgroundColor: colors.card,
     padding: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#f5d5cf',
+    borderColor: colors.border,
   },
   statValue: {
-    color: '#111827',
+    color: colors.text,
     fontSize: 20,
     fontWeight: 'bold',
     marginTop: 4,
   },
   statLabel: {
-    color: '#6b7280',
+    color: colors.text,
     fontSize: 12,
   },
   homeContent: {
@@ -449,10 +466,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
   },
   homeSeeAllBtn: {
-    color: '#ED7868',
+    color: colors.primary,
     fontSize: 14,
     fontWeight: 'bold'
   },
@@ -467,12 +484,12 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.text,
     marginTop: 12,
     marginBottom: 20,
   },
   addTripButton: {
-    backgroundColor: '#ED7868',
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
@@ -483,7 +500,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tripCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 12,
     flexDirection: 'row',
@@ -509,7 +526,7 @@ const styles = StyleSheet.create({
   tripTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 4,
   },
   tripDate: {
@@ -519,18 +536,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   tripDateText: {
-    color: '#6b7280',
+    color: colors.text,
     fontSize: 14,
   },
   tripBadge: {
-    backgroundColor: '#e8f5e0',
+    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
     alignSelf: 'flex-start',
   },
   tripBadgeText: {
-    color: '#a5bb80',
+    color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -552,7 +569,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   mapBannerSolid: {
-    backgroundColor: '#a5bb80',
+    backgroundColor: colors.primary,
     padding: 20,
   },
   mapBannerContent: {
@@ -605,7 +622,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   activityCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
@@ -626,20 +643,20 @@ const styles = StyleSheet.create({
   },
   activityText: {
     fontSize: 14,
-    color: '#111827',
+    color: colors.text,
     marginBottom: 4,
   },
   activityTripName: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.text,
     fontWeight: '400',
   },
   activityTime: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.text,
   },
   emptyActivityState: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
@@ -652,13 +669,13 @@ const styles = StyleSheet.create({
   },
   emptyActivityText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.text,
     marginTop: 8,
     fontWeight: '600',
   },
   emptyActivitySubtext: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.text,
     marginTop: 4,
     textAlign: 'center',
   },

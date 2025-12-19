@@ -1,26 +1,30 @@
 import { useAuth } from '@/contexts/auth-context';
+import { useTheme } from '@/contexts/theme-context';
 import { API } from '@/services/api';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme as useNavTheme } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Trip {
-  id: string;
-  title: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  image: string;
-  photos: string[];
+    id: string;
+    title: string;
+    destination: string;
+    startDate: string;
+    endDate: string;
+    image: string;
+    photos: string[];
 }
 
 export default function ProfileScreen() {
     const router = useRouter();
     const { logout, user } = useAuth();
+    const { theme, toggleTheme } = useTheme();
+    const { colors } = useNavTheme();
     const [trips, setTrips] = useState<Trip[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -45,7 +49,7 @@ export default function ProfileScreen() {
 
     const totalTrips = trips.length;
     const totalPhotos = trips.reduce((acc, trip) => acc + (trip.photos?.length || 0), 0);
-    
+
     const countries = new Set(
         trips
             .map(t => {
@@ -74,12 +78,23 @@ export default function ProfileScreen() {
         }
     };
 
+    const styles = getStyles(colors);
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/*Header*/}
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Profile</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={styles.headerTitle}>Profile</Text>
+                        <Switch
+                            trackColor={{ false: "#767577", true: "#d8e6c2ff" }}
+                            thumbColor={theme === 'dark' ? "#a5bb80" : "#f4f3f4"}
+                            ios_backgroundColor="#3e3e3e"
+                            onValueChange={toggleTheme}
+                            value={theme === 'dark'}
+                        />
+                    </View>
 
                     {/*Profile card*/}
                     <View style={styles.profileCard}>
@@ -98,11 +113,11 @@ export default function ProfileScreen() {
                                 <Text style={styles.profileEmail}>{user?.email || 'email@example.com'}</Text>
                             </View>
                         </View>
-                        
+
                         {/*Stats*/}
                         {isLoading ? (
                             <View style={styles.statsLoading}>
-                                <ActivityIndicator size="small" color="#a5bb80" />
+                                <ActivityIndicator size="small" color={colors.primary} />
                             </View>
                         ) : (
                             <View style={styles.statsGrid}>
@@ -126,12 +141,12 @@ export default function ProfileScreen() {
                 <View style={styles.content}>
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => router.push({ 
-                            pathname: '/modal/edit-profile', 
-                            params: { 
-                                name: user?.name || '', 
-                                email: user?.email || '' 
-                            } 
+                        onPress={() => router.push({
+                            pathname: '/modal/edit-profile',
+                            params: {
+                                name: user?.name || '',
+                                email: user?.email || ''
+                            }
                         })}
                     >
                         <LinearGradient
@@ -145,7 +160,7 @@ export default function ProfileScreen() {
                             <Text style={styles.menuItemSubTitle}>Change your name, email, etc.</Text>
                         </View>
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity
                         style={styles.menuItem}
                         onPress={async () => {
@@ -183,10 +198,10 @@ export default function ProfileScreen() {
     )
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: { primary: any; background: any; card: any; text: any; border?: string; notification?: string; }) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f9fafb'
+        backgroundColor: colors.background
     },
     header: {
         paddingHorizontal: 24,
@@ -194,7 +209,7 @@ const styles = StyleSheet.create({
         paddingBottom: 128,
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
-        backgroundColor:'#a5bb80'
+        backgroundColor: colors.primary
     },
     headerTitle: {
         fontSize: 32,
@@ -203,7 +218,7 @@ const styles = StyleSheet.create({
         marginBottom: 32
     },
     profileCard: {
-        backgroundColor: 'white',
+        backgroundColor: colors.card,
         borderRadius: 24,
         padding: 24,
         shadowColor: '#000',
@@ -222,7 +237,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: '#faf5ff',
+        backgroundColor: colors.background,
         justifyContent: 'center',
         alignItems: 'center',
         overflow: 'hidden',
@@ -240,12 +255,12 @@ const styles = StyleSheet.create({
     profileName: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#111827',
+        color: colors.text,
         marginBottom: 4
     },
     profileEmail: {
         fontSize: 14,
-        color: '#6b7280'
+        color: colors.text
     },
     statsLoading: {
         paddingVertical: 32,
@@ -270,19 +285,19 @@ const styles = StyleSheet.create({
     statValue: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#111827',
+        color: colors.text,
         marginBottom: 2
     },
     statLabel: {
         fontSize: 12,
-        color: '#6b7280'
+        color: colors.text
     },
     content: {
         padding: 24,
         marginTop: -80,
     },
     menuItem: {
-        backgroundColor: '#fff',
+        backgroundColor: colors.card,
         borderRadius: 16,
         padding: 16,
         flexDirection: 'row',
@@ -304,12 +319,12 @@ const styles = StyleSheet.create({
     },
     menuItemTitle: {
         fontSize: 16,
-        fontWeight:'600',
-        color: '#111827',
+        fontWeight: '600',
+        color: colors.text,
         marginBottom: 4
     },
     menuItemSubTitle: {
         fontSize: 14,
-        color: '#6b7280'
+        color: colors.text
     }
 });
