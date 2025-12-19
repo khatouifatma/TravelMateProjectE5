@@ -68,7 +68,7 @@ function RootLayoutContent() {
             name={isSyncing ? "sync" : "sync-outline"}
             size={16}
             color="#fff"
-          />E
+          />
           <Text style={styles.bannerText}>
             {isSyncing
               ? 'Synchronisation...'
