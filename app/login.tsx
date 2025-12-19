@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/auth-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
@@ -70,12 +70,16 @@ export default function LoginScreen() {
                     <View
                         style={styles.header}
                     >
-                        <TouchableOpacity
-                            onPress={() => router.back()}
-                            style={styles.backButton}
-                        >
-                            <Ionicons name="arrow-back" size={24} color="#fff" />
-                        </TouchableOpacity>
+                       
+                        
+                        <View style={styles.logoContainer}>
+                            <Image
+                                source={require('@/assets/image.png')}
+                                style={styles.logo}
+                                resizeMode="contain"
+                            />
+                        </View>
+
                         <Text style={styles.headerTitle}>
                             {isLoginMode
                                 ? 'Connectez-vous à votre compte'
@@ -207,19 +211,19 @@ const styles = StyleSheet.create({
     header: {
         paddingHorizontal: 24,
         paddingTop: 16,
-        paddingBottom: 48,
+        paddingBottom: 38,
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
         backgroundColor:'#a5bb80'
     },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        justifyContent: 'center',
+
+    logoContainer: {
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 0,
+    },
+    logo: {
+        width: 420,
+        height: 420,
     },
     headerTitle: {
         fontSize: 20,
