@@ -149,6 +149,14 @@ npm start
 
 ---
 
+### 🌗 Mode sombre
+
+* Support natif du **mode sombre**
+* Le thème s’adapte automatiquement au **mode de l’appareil** (clair / sombre)
+* Possibilité de basculer manuellement entre les modes depuis l’application
+
+---
+
 ## 🚀 Technologies utilisées
 
 * **React Native** (Expo)
