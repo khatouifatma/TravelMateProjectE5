@@ -2,6 +2,7 @@ import { API } from "@/services/api";
 import { auth } from "@/services/auth";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTheme as useNavTheme } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from "expo-router";
@@ -29,6 +30,7 @@ interface LocationSuggestion {
 
 export default function AddTripModal() {
     const router = useRouter();
+    const { colors } = useNavTheme();
     const [tripTitle, setTripTitle] = useState("");
     const [destination, setDestination] = useState("");
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -320,6 +322,8 @@ export default function AddTripModal() {
         }
     };
 
+    const styles = getStyles(colors);
+
     return (
         <SafeAreaView style={styles.container} edges={['bottom']}>
             <Text style={styles.title}>Ajouter un voyage</Text>
@@ -329,7 +333,7 @@ export default function AddTripModal() {
                     <View style={styles.photoUpload}>
                         <View style={styles.photoButtons}>
                             <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
-                                <Ionicons name="camera" size={32} color="#ED7868" />
+                                <Ionicons name="camera" size={32} color={colors.primary} />
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
                                 <Ionicons name="image" size={32} color="#a5bb80" />
@@ -349,13 +353,14 @@ export default function AddTripModal() {
                         placeholder="Ex: Vacances à Paris"
                         value={tripTitle}
                         onChangeText={setTripTitle}
+                        placeholderTextColor={colors.text}
                     />
                 </View>
 
                 <View style={styles.section}>
                     <Text style={styles.label}>Destination</Text>
                     <View style={styles.inputWithIcon}>
-                        <Ionicons name="location-outline" size={16} color="#6b7280" />
+                        <Ionicons name="location-outline" size={16} color={colors.text} />
                         <TextInput
                             style={styles.inputFlex}
                             placeholder="Tapez une ville (ex: Paris)"
@@ -366,6 +371,7 @@ export default function AddTripModal() {
                                 searchDestination(destination);
                               }
                             }}
+                            placeholderTextColor={colors.text}
                         />
                         <TouchableOpacity onPress={getLocation}>
                             <Ionicons name="navigate" size={20} color="#a5bb80" />
@@ -385,7 +391,7 @@ export default function AddTripModal() {
                                 style={styles.suggestionItem}
                                 onPress={() => selectDestination(item)}
                               >
-                                <Ionicons name="location" size={16} color="#ED7868" />
+                                <Ionicons name="location" size={16} color={colors.primary} />
                                 <View style={styles.suggestionTextContainer}>
                                   <Text style={styles.suggestionCity}>{item.city}</Text>
                                   <Text style={styles.suggestionCountry}>{item.country}</Text>
@@ -409,7 +415,7 @@ export default function AddTripModal() {
                                 style={styles.inputWithIcon}
                                 onPress={() => setShowStartDatePicker(true)}
                             >
-                                <Ionicons name="calendar-outline" size={20} color="#6b7280" />
+                                <Ionicons name="calendar-outline" size={20} color={colors.text} />
                                 <Text style={[styles.dateText, !startDate && styles.placeholderText]}>
                                     {startDate ? formatDate(startDate) : "JJ/MM/AAAA"}
                                 </Text>
@@ -422,7 +428,7 @@ export default function AddTripModal() {
                                 style={styles.inputWithIcon}
                                 onPress={() => setShowEndDatePicker(true)}
                             >
-                                <Ionicons name="calendar-outline" size={20} color="#6b7280" />
+                                <Ionicons name="calendar-outline" size={20} color={colors.text} />
                                 <Text style={[styles.dateText, !endDate && styles.placeholderText]}>
                                     {endDate ? formatDate(endDate) : "JJ/MM/AAAA"}
                                 </Text>
@@ -461,7 +467,7 @@ export default function AddTripModal() {
                         multiline
                         numberOfLines={4}
                         textAlignVertical="top"
-                        placeholderTextColor="#9ca3af"
+                        placeholderTextColor={colors.text}
                     />
                 </View>
 
@@ -469,7 +475,7 @@ export default function AddTripModal() {
                     <View style={styles.progressCard}>
                         <View style={styles.progressHeader}>
                             <View style={styles.progressInfo}>
-                                <Ionicons name="cloud-upload-outline" size={24} color="#ED7868" />
+                                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
                                 <Text style={styles.progressText}>Téléchargement en cours...</Text>
                             </View>
                             <Text style={styles.progressPercent}>{uploadProgress}%</Text>
@@ -495,17 +501,17 @@ export default function AddTripModal() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: { primary: any; background: any; card: any; text: any; border: any; notification?: string; }) => StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: colors.background,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 20,
-        color: '#111827'
+        color: colors.text
     },
     section: {
         marginBottom: 24,
@@ -514,18 +520,18 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 14,
-        color: '#6b7280',
+        color: colors.text,
         marginBottom: 8,
         fontWeight: '600'
     },
     photoUpload: {
-        backgroundColor: '#fef8f7',
+        backgroundColor: colors.card,
         borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
         borderStyle: 'dashed',
-        borderColor: '#f5d5cf',
+        borderColor: colors.border,
         paddingVertical: 20,
     },
     photoButtons: {
@@ -537,7 +543,7 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: 16,
-        backgroundColor: '#fff',
+        backgroundColor: colors.background,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
@@ -548,52 +554,52 @@ const styles = StyleSheet.create({
     },
     photoText: {
         fontSize: 14,
-        color: '#6b7280',
+        color: colors.text,
         textAlign: 'center',
     },
     photoCount: {
         fontSize: 12,
-        color: '#a5bb80',
+        color: colors.primary,
         marginTop: 8,
         fontWeight: '600',
     },
     input: {
-        backgroundColor: '#f9fafb',
+        backgroundColor: colors.card,
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 12,
         fontSize: 16,
-        color: '#111827',
-        borderWidth: 2,
-        borderColor: 'transparent',
+        color: colors.text,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     inputWithIcon: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f9fafb',
+        backgroundColor: colors.card,
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 12,
-        borderWidth: 2,
-        borderColor: 'transparent',
+        borderWidth: 1,
+        borderColor: colors.border,
         gap: 12
     },
     inputFlex: {
         flex: 1,
         fontSize: 16,
-        color: '#111827',
+        color: colors.text,
     },
     dateText: {
         flex: 1,
         fontSize: 16,
-        color: '#111827',
+        color: colors.text,
     },
     placeholderText: {
-        color: '#9ca3af',
+        color: colors.text,
     },
     hint: {
         fontSize: 12,
-        color: '#9ca3af',
+        color: colors.text,
         marginTop: 8
     },
     dateRow: {
@@ -608,7 +614,7 @@ const styles = StyleSheet.create({
         paddingTop: 12,
     },
     progressCard: {
-        backgroundColor: '#fef8f7',
+        backgroundColor: colors.card,
         borderRadius: 16,
         padding: 16,
         marginBottom: 24,
@@ -626,25 +632,25 @@ const styles = StyleSheet.create({
     },
     progressText: {
         fontSize: 14,
-        color: '#111827'
+        color: colors.text
     },
     progressPercent: {
         fontSize: 14,
-        color: '#ED7868',
+        color: colors.primary,
         fontWeight: '600'
     },
     progressBarBg: {
         height: 8,
-        backgroundColor: '#f5d5cf',
+        backgroundColor: colors.border,
         borderRadius: 4,
         overflow: 'hidden'
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: '#ED7868',
+        backgroundColor: colors.primary,
     },
     saveButton: {
-        backgroundColor: '#ED7868',
+        backgroundColor: colors.primary,
         borderRadius: 16,
         paddingVertical: 16,
         alignItems: 'center',
@@ -658,7 +664,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     suggestionsContainer: {
-        backgroundColor: 'white',
+        backgroundColor: colors.card,
         borderRadius: 12,
         marginTop: 8,
         shadowColor: '#000',
@@ -674,7 +680,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#f3f4f6',
+        borderBottomColor: colors.border,
         gap: 12,
     },
     suggestionTextContainer: {
@@ -682,17 +688,17 @@ const styles = StyleSheet.create({
     },
     suggestionCity: {
         fontSize: 15,
-        color: '#111827',
+        color: colors.text,
         fontWeight: '600',
     },
     suggestionCountry: {
         fontSize: 12,
-        color: '#6b7280',
+        color: colors.text,
         marginTop: 2,
     },
     suggestionText: {
         padding: 12,
         textAlign: 'center',
-        color: '#6b7280',
+        color: colors.text,
     },
 });

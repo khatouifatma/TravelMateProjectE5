@@ -1,6 +1,7 @@
 import { API } from '@/services/api';
 import { auth } from '@/services/auth';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme as useNavTheme } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -27,6 +28,7 @@ interface UserProfile {
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const { colors } = useNavTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -158,11 +160,13 @@ export default function EditProfileScreen() {
     );
   };
 
+  const styles = getStyles(colors);
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ED7868" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Chargement du profil...</Text>
         </View>
       </SafeAreaView>
@@ -194,7 +198,7 @@ export default function EditProfileScreen() {
             onPress={pickImage}
             disabled={isUploadingAvatar}
           >
-            <Ionicons name="camera" size={20} color="#ED7868" />
+            <Ionicons name="camera" size={20} color={colors.primary} />
             <Text style={styles.changePhotoText}>
               {isUploadingAvatar ? 'Upload en cours...' : 'Changer la photo'}
             </Text>
@@ -290,10 +294,10 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   return headers;
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: { primary: any; background: any; card: any; text: any; border: any; notification?: string; }) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -303,7 +307,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.text,
   },
   header: {
     flexDirection: 'row',
@@ -311,9 +315,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: 'white',
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   backButton: {
     width: 40,
@@ -324,7 +328,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
   },
   placeholder: {
     width: 40,
@@ -335,7 +339,7 @@ const styles = StyleSheet.create({
   avatarSection: {
     alignItems: 'center',
     paddingVertical: 32,
-    backgroundColor: 'white',
+    backgroundColor: colors.card,
     marginBottom: 16,
   },
   avatarContainer: {
@@ -347,17 +351,17 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
-    borderColor: '#ED7868',
+    borderColor: colors.primary,
   },
   avatarPlaceholder: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
   },
   uploadingOverlay: {
     position: 'absolute',
@@ -377,12 +381,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#fef5f3',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#ED7868',
+    borderColor: colors.primary,
   },
   changePhotoText: {
-    color: '#ED7868',
+    color: colors.primary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -396,28 +400,28 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.text,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: colors.card,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
     gap: 12,
   },
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
   },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eff6ff',
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 12,
     gap: 8,
@@ -426,19 +430,19 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: '#374151',
+    color: colors.text,
   },
   saveButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ED7868',
+    backgroundColor: colors.primary,
     marginHorizontal: 24,
     marginTop: 32,
     paddingVertical: 16,
     borderRadius: 12,
     gap: 8,
-    shadowColor: '#ED7868',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -461,7 +465,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   cancelButtonText: {
-    color: '#6b7280',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '500',
   },

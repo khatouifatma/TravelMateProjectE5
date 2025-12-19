@@ -223,7 +223,7 @@ export default function HomeScreen() {
           <View style={styles.statsContainer}>
             {stats.map((stat, index) => (
               <View key={index} style={styles.statCard}>
-                <Ionicons name={stat.icon} size={24} color={colors.primary} />
+                <Ionicons name={stat.icon} size={24} color="#ED7868" />
                 <Text style={styles.statValue}>{stat.value}</Text>
                 <Text style={styles.statLabel}>{stat.label}</Text>
               </View>
@@ -250,7 +250,7 @@ export default function HomeScreen() {
           </View>
         ) : upcomingTrips.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="airplane-outline" size={48} color="#d1d5db" />
+            <Ionicons name="airplane-outline" size={48} color="white" />
             <Text style={styles.emptyStateText}>No upcoming trips</Text>
             <TouchableOpacity style={styles.addTripButton} onPress={handleAddTrip}>
               <Text style={styles.addTripButtonText}>Add your first trip</Text>
@@ -317,8 +317,8 @@ export default function HomeScreen() {
           <Text style={{ ...styles.sectionTitle, paddingHorizontal: 12 }}>Quick Actions</Text>
           <View style={styles.quickActionsGrid}>
             <TouchableOpacity onPress={handleAddTrip}>
-              <View style={[styles.quickActionCard, { backgroundColor: colors.primary }]}>
-                <Ionicons name="add-circle-outline" size={24} color="#fff" />
+              <View style={[styles.quickActionCard, { backgroundColor: "#ED7868" }]}>
+                <Ionicons name="add-circle-outline" size={24} color="white" />
                 <Text style={styles.quickActionLabel}>New Trip</Text>
               </View>
             </TouchableOpacity>
@@ -331,7 +331,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleMapPress}>
-              <View style={[styles.quickActionCard, { backgroundColor: colors.text }]}>
+              <View style={[styles.quickActionCard, { backgroundColor: "grey" }]}>
                 <Ionicons name="map-outline" size={24} color="#fff" />
                 <Text style={styles.quickActionLabel}>Map View</Text>
               </View>
